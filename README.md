@@ -452,3 +452,12 @@ edit diffs; `mcp` runs a real fixture server over stdio; `hooks`, `session`,
 `tools`, `search`, `subagent` and `images` cover their namesakes; `ui.smoke`
 renders the real TUI against a stub agent for 41 checks.
 
+
+
+## Development
+
+```bash
+npm run check   # typecheck + tests
+npm test        # all suites
+npm run build   # bundle to dist/
+```

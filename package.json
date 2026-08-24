@@ -1,14 +1,18 @@
 {
   "name": "spider-cli",
   "version": "0.1.0",
-  "description": "Claude Code-style agentic coding CLI for the University of Richmond SpiderAI API",
+  "description": "A Claude Code-style agentic coding CLI for the University of Richmond SpiderAI API",
   "type": "module",
   "bin": {
-    "spider": "./bin/spider"
+    "spider": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.tsx",
-    "typecheck": "tsc --noEmit"
+    "build": "tsup",
+    "test": "tsx test/run-all.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
+    "prepublishOnly": "npm run check && npm run build"
   },
   "engines": {
     "node": ">=20"
@@ -25,7 +29,16 @@
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "ink-testing-library": "^4.0.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
-  }
+  },
+  "license": "MIT",
+  "author": "John Gilbert",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ]
 }
