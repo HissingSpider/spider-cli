@@ -3,6 +3,7 @@ import path from 'node:path';
 import { HOME_DIR } from './config.ts';
 import type { PermissionMode } from './config.ts';
 import type { Turn } from './providers/types.ts';
+import { writeFileAtomic } from './atomic.ts';
 
 /**
  * Session persistence.
@@ -80,7 +81,7 @@ export function save(session: SavedSession): void {
   // is a rewrite, not an append.
   if (already === 0 || session.turns.length < already || !fs.existsSync(file)) {
     const lines = [JSON.stringify(header), ...session.turns.map((t) => JSON.stringify(t))];
-    fs.writeFileSync(file, lines.join('\n') + '\n');
+    writeFileAtomic(file, lines.join('\n') + '\n');
     written.set(session.id, session.turns.length);
     return;
   }
@@ -95,7 +96,7 @@ export function save(session: SavedSession): void {
   try {
     const body = fs.readFileSync(file, 'utf8').split('\n');
     body[0] = JSON.stringify(header);
-    fs.writeFileSync(file, body.join('\n'));
+    writeFileAtomic(file, body.join('\n'));
   } catch {
     /* the turns are safely on disk either way */
   }

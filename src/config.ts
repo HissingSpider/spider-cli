@@ -7,6 +7,7 @@ import { ANTHROPIC_MODELS } from './providers/anthropic.ts';
 import type { McpServerConfig } from './mcp/client.ts';
 import type { HooksConfig } from './agent/hooks.ts';
 import type { SearchConfig } from './tools/search.ts';
+import { writeFileAtomic } from './atomic.ts';
 
 export type PermissionMode =
   | 'default'
@@ -126,7 +127,7 @@ export function addMcpServer(cwd: string, name: string, cfg: unknown): string {
   const file = path.join(cwd, PROJECT_MCP);
   const current = readJSON(file);
   const servers = { ...(current.mcpServers ?? {}), [name]: cfg } as Record<string, unknown>;
-  fs.writeFileSync(file, JSON.stringify({ ...current, mcpServers: servers }, null, 2) + '\n');
+  writeFileAtomic(file, JSON.stringify({ ...current, mcpServers: servers }, null, 2) + '\n');
   return file;
 }
 
@@ -137,7 +138,7 @@ export function removeMcpServer(cwd: string, name: string): boolean {
   const servers = { ...(current.mcpServers ?? {}) } as Record<string, unknown>;
   if (!(name in servers)) return false;
   delete servers[name];
-  fs.writeFileSync(file, JSON.stringify({ ...current, mcpServers: servers }, null, 2) + '\n');
+  writeFileAtomic(file, JSON.stringify({ ...current, mcpServers: servers }, null, 2) + '\n');
   return true;
 }
 
@@ -174,10 +175,10 @@ export function persistAllowRule(cwd: string, rule: string): void {
   const current = readJSON(file);
   const allow = new Set(current.allow ?? []);
   allow.add(rule);
-  fs.writeFileSync(file, JSON.stringify({ ...current, allow: [...allow] }, null, 2) + '\n');
+  writeFileAtomic(file, JSON.stringify({ ...current, allow: [...allow] }, null, 2) + '\n');
 
   const ignore = path.join(cwd, '.spider', '.gitignore');
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'settings.local.json\n');
+  if (!fs.existsSync(ignore)) writeFileAtomic(ignore, 'settings.local.json\n');
 }
 
 export type Credentials = { apiKey: string; baseUrl: string };

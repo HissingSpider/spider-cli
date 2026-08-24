@@ -226,6 +226,11 @@ is enough new history to be worth summarizing, the older transcript is replaced
 with a summary and the most recent `keepRecentTurns` turns are kept verbatim.
 `/compact` does it on demand; `/context` shows where you stand.
 
+Checkpoints are capped at 50, with a 32 MB ceiling on retained file contents
+and a 2 MB per-file limit. Every checkpoint holds the pre-edit contents of each
+file touched after it, so an uncapped store grew 40 MB over 200 turns. `/rewind`
+reports both what it dropped and any file too large to revert.
+
 The cut point never lands on a tool turn — that would orphan a `tool_use` id
 from the assistant turn that issued it and the next request would be rejected.
 Repeat compactions are damped so a low threshold cannot thrash.

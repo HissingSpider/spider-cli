@@ -114,6 +114,52 @@ check(
   ),
 );
 
+// --- caps: an unbounded store grew 40 MB over 200 turns ---
+{
+  const big = fs.mkdtempSync(path.join(os.tmpdir(), 'spider-cap-'));
+  const target = path.join(big, 'f.txt');
+  const body = 'y'.repeat(50_000);
+  fs.writeFileSync(target, body);
+
+  const capped = new CheckpointStore();
+  for (let i = 0; i < 200; i++) {
+    capped.record('turn ' + i, []);
+    capped.backup(target);
+    fs.writeFileSync(target, body + i);
+  }
+  check('checkpoint count is capped', capped.length <= 50, String(capped.length));
+  check(
+    'older checkpoints are reported as dropped',
+    capped.droppedCount > 0,
+    String(capped.droppedCount),
+  );
+  check(
+    'retained bytes stay bounded',
+    capped.retainedBytes <= 32_000_000,
+    (capped.retainedBytes / 1e6).toFixed(1) + ' MB',
+  );
+  check(
+    'the listing admits the drop',
+    /older checkpoints? dropped/.test(formatList(capped.list(), big, capped.droppedCount)),
+  );
+
+  // A file too large to copy must be reported, not silently left alone.
+  const huge = path.join(big, 'huge.txt');
+  fs.writeFileSync(huge, 'z'.repeat(2_500_000));
+  const store3 = new CheckpointStore();
+  const cpH = store3.record('touch a huge file', []);
+  store3.backup(huge);
+  check('an oversized file is not copied', !cpH.files.has(huge));
+  const restored = store3.restore(cpH.id);
+  check(
+    'restore reports what it could not revert',
+    restored?.unbacked.includes(huge) === true,
+    JSON.stringify(restored?.unbacked),
+  );
+
+  fs.rmSync(big, { recursive: true, force: true });
+}
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log(
   failures.length ? '\n' + failures.length + ' FAILED' : '\nAll checkpoint checks passed',

@@ -552,7 +552,10 @@ export function App({
       const now = Date.now();
       if (now - lastEscape.current < 600) {
         lastEscape.current = 0;
-        push({ kind: 'notice', text: formatList(agent.checkpoints.list(), cwd) });
+        push({
+          kind: 'notice',
+          text: formatList(agent.checkpoints.list(), cwd, agent.checkpoints.droppedCount),
+        });
       } else {
         lastEscape.current = now;
       }
@@ -982,7 +985,10 @@ export function App({
           }
           case '/rewind': {
             if (!arg) {
-              push({ kind: 'notice', text: formatList(agent.checkpoints.list(), cwd) });
+              push({
+                kind: 'notice',
+                text: formatList(agent.checkpoints.list(), cwd, agent.checkpoints.droppedCount),
+              });
               return;
             }
             const id = Number(arg);
@@ -1004,6 +1010,12 @@ export function App({
             }
             if (result.removed.length) {
               parts.push('Deleted: ' + result.removed.map((f) => path.relative(cwd, f)).join(', '));
+            }
+            if (result.unbacked.length) {
+              parts.push(
+                'Too large to revert: ' +
+                  result.unbacked.map((f) => path.relative(cwd, f)).join(', '),
+              );
             }
             if (result.failed.length) {
               parts.push(

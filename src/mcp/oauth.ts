@@ -11,6 +11,7 @@ import type {
   OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { HOME_DIR } from '../config.ts';
+import { writeFileAtomic } from '../atomic.ts';
 
 const STORE_DIR = path.join(HOME_DIR, 'oauth');
 const CALLBACK_TIMEOUT_MS = 300_000;
@@ -39,7 +40,7 @@ function writeStore(server: string, data: Stored): void {
   fs.mkdirSync(STORE_DIR, { recursive: true });
   const file = storePath(server);
   // Tokens are bearer credentials — never leave them world-readable.
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), { mode: 0o600 });
+  writeFileAtomic(file, JSON.stringify(data, null, 2), { mode: 0o600 });
   fs.chmodSync(file, 0o600);
 }
 

@@ -4,6 +4,7 @@ import readline from 'node:readline';
 import { HOME_DIR } from '../config.ts';
 import type { McpServerConfig } from './client.ts';
 import { isHttpConfig } from './client.ts';
+import { writeFileAtomic } from '../atomic.ts';
 
 /**
  * Trusting a server before running it.
@@ -31,7 +32,7 @@ function read(): TrustStore {
 
 function write(store: TrustStore): void {
   fs.mkdirSync(path.dirname(TRUST_FILE), { recursive: true });
-  fs.writeFileSync(TRUST_FILE, JSON.stringify(store, null, 2) + '\n', { mode: 0o600 });
+  writeFileAtomic(TRUST_FILE, JSON.stringify(store, null, 2) + '\n', { mode: 0o600 });
 }
 
 /** What we are actually trusting — not just the name it was filed under. */
@@ -86,7 +87,7 @@ export function trustDir(dir: string): void {
   const resolved = path.resolve(dir);
   if (!dirs.includes(resolved)) dirs.push(resolved);
   fs.mkdirSync(path.dirname(TRUSTED_DIRS), { recursive: true });
-  fs.writeFileSync(TRUSTED_DIRS, JSON.stringify(dirs, null, 2) + '\n', { mode: 0o600 });
+  writeFileAtomic(TRUSTED_DIRS, JSON.stringify(dirs, null, 2) + '\n', { mode: 0o600 });
 }
 
 export function untrustDir(dir: string): boolean {
@@ -94,7 +95,7 @@ export function untrustDir(dir: string): boolean {
   const dirs = readDirs();
   const next = dirs.filter((d) => d !== resolved);
   if (next.length === dirs.length) return false;
-  fs.writeFileSync(TRUSTED_DIRS, JSON.stringify(next, null, 2) + '\n', { mode: 0o600 });
+  writeFileAtomic(TRUSTED_DIRS, JSON.stringify(next, null, 2) + '\n', { mode: 0o600 });
   return true;
 }
 
