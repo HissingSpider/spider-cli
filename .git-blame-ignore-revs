@@ -1,0 +1,6 @@
+# Revisions that only reformat. Skip them in blame:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub honours this file automatically.)
+
+# Format the codebase with Biome
+9e9aa98e44725ce030bc5bf898922d5190228315
