@@ -142,6 +142,29 @@ console.log('\nno hooks configured');
 const none = await runHooks('Stop', settings({}), {}, dir);
 check('nothing configured is a no-op', !none.blocked && !none.notices.length);
 
+console.log('\nhooks that ignore stdin');
+// A hook that never reads stdin closes the pipe early; writing the payload then
+// raises EPIPE, which unguarded is an unhandled socket error that kills the CLI.
+// Timing-dependent — it passed on macOS and failed on Linux CI — so the payload
+// is padded to make the write big enough to lose the race reliably.
+const big = 'x'.repeat(200_000);
+
+const quiet = await runHooks(
+  'PreToolUse',
+  settings({ PreToolUse: [{ command: 'exit 0' }] }),
+  { tool_name: 'bash', tool_input: { command: big } },
+  dir,
+);
+check('a hook that ignores stdin does not crash the process', !quiet.blocked);
+
+const printer = await runHooks(
+  'PreToolUse',
+  settings({ PreToolUse: [{ command: 'echo ok' }] }),
+  { tool_name: 'bash', tool_input: { command: big } },
+  dir,
+);
+check('a hook that only prints still completes', !printer.blocked);
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('');
 if (failures.length) {

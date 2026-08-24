@@ -91,7 +91,17 @@ function runOne(hook: HookConfig, payload: HookPayload, cwd: string): Promise<Ru
         });
       },
     );
-    child.stdin?.end(JSON.stringify(payload));
+    // A hook that ignores its stdin is perfectly legitimate — `echo ok` never
+    // reads it. The pipe then closes before this write lands, raising EPIPE as
+    // an unhandled 'error' event on the socket, which takes the CLI down. The
+    // race is timing-dependent: it passed on macOS and failed on Linux CI.
+    const stdin = child.stdin;
+    if (stdin) {
+      stdin.on('error', () => {
+        /* the hook did not want the payload; that is not a failure */
+      });
+      stdin.end(JSON.stringify(payload));
+    }
   });
 }
 
