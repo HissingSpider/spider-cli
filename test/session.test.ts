@@ -49,7 +49,8 @@ check(
 console.log('\nload');
 const loaded = sessions.byId(id, CWD)!;
 check('it round-trips', loaded.turns.length === 2, JSON.stringify(loaded.turns));
-check('turn text survives', (loaded.turns[0] as any).text === 'one');
+const first = loaded.turns[0];
+check('turn text survives', first.role === 'user' && first.text === 'one');
 check('a title is derived from the first user turn', loaded.title === 'one', loaded.title);
 
 console.log('\nmode and rules survive');

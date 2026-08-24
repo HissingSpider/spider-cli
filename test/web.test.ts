@@ -4,6 +4,7 @@ import { htmlToText, hostOf, webFetchTool } from '../src/tools/web.ts';
 import { decide, suggestedRule } from '../src/agent/permissions.ts';
 import type { Settings } from '../src/config.ts';
 import type { ToolCall } from '../src/providers/types.ts';
+import type { AddressInfo } from 'node:net';
 
 const failures: string[] = [];
 function check(name: string, cond: boolean, detail?: string) {
@@ -151,7 +152,7 @@ check(
     res.end('arrived');
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-  const port = (server.address() as any).port;
+  const port = (server.address() as AddressInfo).port;
   const base = 'http://127.0.0.1:' + port;
 
   const cross = await webFetchTool.run({ url: base + '/away' }, process.cwd());

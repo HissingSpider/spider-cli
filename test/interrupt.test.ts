@@ -4,6 +4,8 @@
 import { Agent } from '../src/agent/loop.ts';
 import type { Settings } from '../src/config.ts';
 import type { Turn } from '../src/providers/types.ts';
+const toolTurns = (ts: Turn[]) =>
+  ts.filter((t): t is Extract<Turn, { role: 'tool' }> => t.role === 'tool');
 
 const failures: string[] = [];
 function check(name: string, cond: boolean, detail?: string) {
@@ -30,7 +32,7 @@ const settings: Settings = {
 const agent = new Agent('/tmp', settings, null, 'https://example.invalid/v1', 'unused');
 
 const orphans = (ts: Turn[]) => {
-  const answered = new Set(ts.filter((t) => t.role === 'tool').map((t: any) => t.callId));
+  const answered = new Set(toolTurns(ts).map((t) => t.callId));
   const ids: string[] = [];
   for (const t of ts)
     if (t.role === 'assistant')
@@ -59,13 +61,11 @@ check(
 );
 check(
   'stubs say they were interrupted',
-  agent.turns
-    .filter((t) => t.role === 'tool')
-    .every((t: any) => /Interrupted by user/.test(t.output)),
+  agent.turns.filter((t) => t.role === 'tool').every((t) => /Interrupted by user/.test(t.output)),
 );
 check(
   'stubs are flagged as errors',
-  agent.turns.filter((t) => t.role === 'tool').every((t: any) => t.isError === true),
+  toolTurns(agent.turns).every((t) => t.isError === true),
 );
 
 // Interrupted with one tool already done: the finished result must be preserved.
@@ -83,11 +83,11 @@ agent.turns = [
 ];
 agent.settleInterruptedCalls();
 check('partially completed round is closed', orphans(agent.turns).length === 0);
-const b1 = agent.turns.find((t: any) => t.role === 'tool' && t.callId === 'b1') as any;
+const b1 = toolTurns(agent.turns).find((t) => t.callId === 'b1');
 check(
   'completed result is not overwritten',
-  b1.output === 'REAL OUTPUT' && b1.isError === false,
-  b1.output,
+  b1?.output === 'REAL OUTPUT' && b1?.isError === false,
+  b1?.output,
 );
 check('exactly one stub was added', agent.turns.filter((t) => t.role === 'tool').length === 2);
 

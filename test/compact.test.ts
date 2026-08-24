@@ -3,6 +3,7 @@
  *  longer in the transcript, and the API rejects it. */
 import { compactTurns, safeSplitIndex, isSummaryTurn } from '../src/agent/compact.ts';
 import type { Turn } from '../src/providers/types.ts';
+const isAssistant = (t: Turn): t is Extract<Turn, { role: 'assistant' }> => t.role === 'assistant';
 
 const failures: string[] = [];
 function check(name: string, cond: boolean, detail?: string) {
@@ -56,10 +57,12 @@ check(
   orphanCheck(r1.turns) + ' orphaned',
 );
 check('summary turn is marked', isSummaryTurn(r1.turns[0]));
+const last = r1.turns[r1.turns.length - 1];
 check(
   'recent turns kept verbatim',
   r1.turns[r1.turns.length - 1].role === 'assistant' &&
-    (r1.turns[r1.turns.length - 1] as any).text === 'done two',
+    isAssistant(last) &&
+    last.text === 'done two',
 );
 check('dropped count reported', r1.droppedTurns === 4, 'got ' + r1.droppedTurns);
 check(

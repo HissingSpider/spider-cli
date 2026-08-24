@@ -3,7 +3,10 @@ import { render } from 'ink-testing-library';
 import { App } from '../src/ui/App.tsx';
 import { CheckpointStore } from '../src/checkpoint.ts';
 import type { Agent } from '../src/agent/loop.ts';
+import type { AgentEvents } from '../src/agent/loop.ts';
 
+// biome-ignore lint/suspicious/noExplicitAny: a deliberate partial double of
+// Agent — typing every member would restate the class without testing anything.
 const stub: any = {
   lastSignal: undefined as AbortSignal | undefined,
   model: 'gpt-5',
@@ -27,18 +30,18 @@ const stub: any = {
     estimateUSD: () => 0,
   },
   contextTokens: () => 0,
-  setModel(this: any, m: string) {
-    this.model = m;
+  setModel(m: string) {
+    stub.model = m;
   },
-  async run(this: any, _text: string, events: any, signal?: AbortSignal) {
-    if (signal) this.lastSignal = signal;
+  async run(_text: string, events: AgentEvents, signal?: AbortSignal) {
+    if (signal) stub.lastSignal = signal;
     // Drive one permission round-trip through the UI.
     const answer = await events.requestPermission(
       { id: 'c1', name: 'bash', input: { command: 'ls -la' } },
       'bash(ls:*)',
       '$ ls -la',
     );
-    events.onToolEnd({ id: 'c1', name: 'bash' }, 'answer=' + answer, false);
+    events.onToolEnd({ id: 'c1', name: 'bash', input: {} }, 'answer=' + answer, false);
     events.onAssistantEnd();
   },
 } as unknown as Agent;
@@ -184,7 +187,7 @@ check('footer shows a running cost', footer.includes('$0.0000'), footer.slice(-2
 
 // --- input queues instead of being dropped while busy (card #32) ---
 let release: (() => void) | null = null;
-stub.run = async (_text: string, events: any) => {
+stub.run = async (_text: string, events: AgentEvents) => {
   await new Promise<void>((r) => {
     release = r;
   });
@@ -205,7 +208,7 @@ check(
   strip(lastFrame()).slice(-300),
 );
 
-stub.run = async (_text: string, events: any) => {
+stub.run = async (_text: string, events: AgentEvents) => {
   events.onToolEnd({ id: 'c2', name: 'bash', input: { command: 'x' } }, 'ran second', false);
   events.onAssistantEnd();
 };
@@ -218,7 +221,7 @@ check(
 );
 
 // --- collapsible tool output (card #29) ---
-stub.run = async (_text: string, events: any) => {
+stub.run = async (_text: string, events: AgentEvents) => {
   const many = Array.from({ length: 30 }, (_, i) => 'line ' + i).join('\n');
   events.onToolEnd({ id: 'c3', name: 'bash', input: { command: 'big' } }, many, false);
   events.onAssistantEnd();
@@ -235,7 +238,7 @@ await sleep(250);
 check('ctrl+o expands it', strip(lastFrame()).includes('line 29'), strip(lastFrame()).slice(-500));
 
 // --- multi-line input via a trailing backslash (card #36) ---
-stub.run = async (_text: string, events: any) => {
+stub.run = async (_text: string, events: AgentEvents) => {
   events.onToolEnd({ id: 'ml', name: 'bash', input: { command: 'x' } }, 'saw:' + _text, false);
   events.onAssistantEnd();
 };

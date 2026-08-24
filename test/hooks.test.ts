@@ -17,7 +17,7 @@ function check(name: string, cond: boolean, detail?: string) {
 }
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spider-hooks-'));
-const settings = (hooks: any): Settings => ({
+const settings = (hooks: Settings['hooks']): Settings => ({
   model: 'gpt-5',
   permissionMode: 'default',
   allow: [],

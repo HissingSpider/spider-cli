@@ -8,6 +8,7 @@ import type { AddressInfo } from 'node:net';
 import { postJSON, postSSE } from '../src/providers/http.ts';
 import { SpiderAIError, throwIfErrorBody } from '../src/providers/types.ts';
 import { errorCode, errorMessage } from '../src/errors.ts';
+import type { SSEData } from '../src/providers/http.ts';
 
 const failures: string[] = [];
 function check(name: string, cond: boolean, detail?: string) {
@@ -159,7 +160,7 @@ check(
 check('it retried rather than got lucky', retried.attempts === 3, 'attempts=' + retried.attempts);
 
 // --- postSSE ---------------------------------------------------------------
-const events: any[] = [];
+const events: SSEData[] = [];
 for await (const ev of postSSE(base + '/sse', {}, {})) events.push(ev.data);
 check(
   'SSE frames are parsed in order',
