@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import type { Settings } from '../config.ts';
 import type { ToolCall } from '../providers/types.ts';
+import { errorCode } from '../errors.ts';
 
 /**
  * Hooks — shell commands the harness runs at fixed points in a turn.
@@ -78,7 +79,7 @@ function runOne(hook: HookConfig, payload: HookPayload, cwd: string): Promise<Ru
         env: { ...process.env, SPIDER_HOOK_EVENT: payload.event },
       },
       (err, stdout, stderr) => {
-        const code = err ? ((err as any).code ?? 1) : 0;
+        const code = err ? (errorCode(err) ?? 1) : 0;
         resolve({
           code: typeof code === 'number' ? code : 1,
           stdout: String(stdout ?? ''),

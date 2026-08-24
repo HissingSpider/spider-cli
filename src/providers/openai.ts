@@ -9,7 +9,7 @@ function toInput(turns: Turn[]): unknown[] {
   const items: unknown[] = [];
   for (const t of turns) {
     if (t.role === 'user') {
-      const content: any[] = [{ type: 'input_text', text: t.text }];
+      const content: Record<string, unknown>[] = [{ type: 'input_text', text: t.text }];
       for (const img of t.images ?? []) {
         content.push({
           type: 'input_image',

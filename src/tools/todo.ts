@@ -37,12 +37,20 @@ export function clearTodos(): void {
   setTodos([]);
 }
 
+/** Read a string field off a value that came from untrusted JSON. */
+function field(item: unknown, key: string): string {
+  if (typeof item === 'object' && item !== null && key in item) {
+    return String((item as Record<string, unknown>)[key] ?? '');
+  }
+  return '';
+}
+
 function normalize(raw: unknown): Todo[] | string {
   if (!Array.isArray(raw)) return 'todos must be an array.';
   const out: Todo[] = [];
   for (const item of raw) {
-    const content = String((item as any)?.content ?? '').trim();
-    const status = String((item as any)?.status ?? 'pending');
+    const content = field(item, 'content').trim();
+    const status = field(item, 'status') || 'pending';
     if (!content) return 'every todo needs a non-empty content field.';
     if (status !== 'pending' && status !== 'in_progress' && status !== 'completed') {
       return `unknown status "${status}" — use pending, in_progress or completed.`;

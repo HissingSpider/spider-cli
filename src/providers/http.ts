@@ -2,6 +2,7 @@ import { SpiderAIError, throwIfErrorBody } from './types.ts';
 // A retry is otherwise invisible: the spinner just takes longer, which looks
 // identical to a slow model. Say that the network is flapping and being handled.
 import { notice } from '../ui/notices.ts';
+import { errorMessage } from '../errors.ts';
 
 const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
 const MAX_ATTEMPTS = 3;
@@ -50,7 +51,7 @@ export async function postJSON(
         await sleep(wait);
         continue;
       }
-      let parsed: any;
+      let parsed: unknown;
       try {
         parsed = JSON.parse(text);
       } catch {
@@ -68,7 +69,7 @@ export async function postJSON(
       const wait = 2 ** attempt * 250;
       notice(
         'Request failed (' +
-          ((lastErr as any)?.message ?? 'connection error') +
+          errorMessage(lastErr) +
           ') — retrying in ' +
           Math.round(wait / 100) / 10 +
           's (attempt ' +

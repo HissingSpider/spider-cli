@@ -104,7 +104,7 @@ function projectedEdit(current: string, input: Record<string, any>): string | nu
  * to show (unreadable file, binary, a pattern that does not match).
  */
 export function editDiff(call: ToolCall, cwd: string): string[] | null {
-  const target = String((call.input as any).path ?? '');
+  const target = String(call.input.path ?? '');
   if (!target) return null;
   const file = resolveIn(cwd, target);
 
@@ -123,7 +123,7 @@ export function editDiff(call: ToolCall, cwd: string): string[] | null {
   }
 
   if (call.name === 'write_file') {
-    const next = String((call.input as any).content ?? '');
+    const next = String(call.input.content ?? '');
     if (!exists) {
       const lines = next.split('\n');
       const shown = lines.slice(0, MAX_DIFF_LINES).map((l) => '+' + l);

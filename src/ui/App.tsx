@@ -749,7 +749,7 @@ export function App({
               text: '[ran directly] $ ' + command + '\n' + r.output,
             });
           })
-          .catch((e: any) => push({ kind: 'error', text: errorMessage(e) }))
+          .catch((e: unknown) => push({ kind: 'error', text: errorMessage(e) }))
           .finally(() => setBusy(false));
         return;
       }
@@ -896,7 +896,7 @@ export function App({
                 onNotice: (t) => push({ kind: 'notice', text: t }),
                 requestPermission: async () => 'deny',
               })
-              .catch((e: any) => push({ kind: 'error', text: errorMessage(e) }))
+              .catch((e: unknown) => push({ kind: 'error', text: errorMessage(e) }))
               .finally(() => setBusy(false));
             return;
           case '/permissions':
@@ -1184,7 +1184,7 @@ export function App({
                     push({ kind: 'user', text });
                     return runAgent(text);
                   })
-                  .catch((e: any) =>
+                  .catch((e: unknown) =>
                     push({ kind: 'error', text: 'Prompt failed: ' + errorMessage(e) }),
                   )
                   .finally(() => setBusy(false));

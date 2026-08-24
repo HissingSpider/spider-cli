@@ -56,13 +56,20 @@ export class SpiderAIError extends Error {
   }
 }
 
-export function throwIfErrorBody(body: any): void {
-  if (body && typeof body === 'object' && body.error) {
-    const e = body.error;
-    const msg = typeof e === 'string' ? e : (e.message ?? JSON.stringify(e));
-    throw new SpiderAIError(msg, typeof e === 'object' ? e.code : undefined);
+export function throwIfErrorBody(body: unknown): void {
+  if (typeof body !== 'object' || body === null) return;
+  const record = body as Record<string, unknown>;
+
+  const error = record.error;
+  if (error) {
+    // The gateway sends either a bare string or {code, message}.
+    if (typeof error === 'string') throw new SpiderAIError(error);
+    const details = error as Record<string, unknown>;
+    const message = typeof details.message === 'string' ? details.message : JSON.stringify(error);
+    const code = typeof details.code === 'number' ? details.code : undefined;
+    throw new SpiderAIError(message, code);
   }
-  if (body && typeof body === 'object' && typeof body.detail === 'string') {
-    throw new SpiderAIError(body.detail);
-  }
+
+  // FastAPI's own rejections (a bad auth header, an unknown route) use `detail`.
+  if (typeof record.detail === 'string') throw new SpiderAIError(record.detail);
 }

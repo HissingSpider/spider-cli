@@ -1,6 +1,14 @@
 import type { ToolImpl } from './index.ts';
 import { errorMessage } from '../errors.ts';
 
+/** Only the fields actually read; both APIs return a great deal more. */
+type BraveResponse = {
+  web?: { results?: Array<{ title?: unknown; url?: unknown; description?: unknown }> };
+};
+type TavilyResponse = {
+  results?: Array<{ title?: unknown; url?: unknown; content?: unknown }>;
+};
+
 /**
  * Web search.
  *
@@ -56,8 +64,8 @@ async function brave(
     headers: { Accept: 'application/json', 'X-Subscription-Token': key },
   });
   if (!res.ok) throw new Error('Brave search returned HTTP ' + res.status);
-  const body: any = await res.json();
-  return (body?.web?.results ?? []).slice(0, count).map((r: any) => ({
+  const body = (await res.json()) as BraveResponse;
+  return (body.web?.results ?? []).slice(0, count).map((r) => ({
     title: String(r.title ?? ''),
     url: String(r.url ?? ''),
     snippet: String(r.description ?? '').replace(/<[^>]+>/g, ''),
@@ -77,8 +85,8 @@ async function tavily(
     body: JSON.stringify({ api_key: key, query, max_results: count }),
   });
   if (!res.ok) throw new Error('Tavily search returned HTTP ' + res.status);
-  const body: any = await res.json();
-  return (body?.results ?? []).slice(0, count).map((r: any) => ({
+  const body = (await res.json()) as TavilyResponse;
+  return (body.results ?? []).slice(0, count).map((r) => ({
     title: String(r.title ?? ''),
     url: String(r.url ?? ''),
     snippet: String(r.content ?? ''),
