@@ -26,13 +26,19 @@ const turns: Turn[] = [
 
 // Index 2 is a tool turn — cutting there orphans a1, so it steps back to the
 // assistant turn that owns it rather than forward past the recent history.
-check('split steps back off a tool turn', safeSplitIndex(turns, 2) === 1,
-  'got ' + safeSplitIndex(turns, 2));
+check(
+  'split steps back off a tool turn',
+  safeSplitIndex(turns, 2) === 1,
+  'got ' + safeSplitIndex(turns, 2),
+);
 check('split on a user turn stays put', safeSplitIndex(turns, 4) === 4);
 check('split on an assistant turn stays put', safeSplitIndex(turns, 5) === 5);
 check('split past the end clamps to length', safeSplitIndex(turns, 99) === turns.length);
-check('split never returns a tool index', ![2, 6].includes(safeSplitIndex(turns, 6)) || safeSplitIndex(turns, 6) === 5,
-  'got ' + safeSplitIndex(turns, 6));
+check(
+  'split never returns a tool index',
+  ![2, 6].includes(safeSplitIndex(turns, 6)) || safeSplitIndex(turns, 6) === 5,
+  'got ' + safeSplitIndex(turns, 6),
+);
 
 const orphanCheck = (ts: Turn[]) => {
   const ids = new Set<string>();
@@ -44,14 +50,23 @@ const summarize = async () => 'SUMMARY: user asked for two things; both done.';
 
 const r1 = await compactTurns(turns, 4, summarize);
 check('compacts when there is history', r1.compacted);
-check('no orphaned tool results after compaction', orphanCheck(r1.turns) === 0,
-  orphanCheck(r1.turns) + ' orphaned');
+check(
+  'no orphaned tool results after compaction',
+  orphanCheck(r1.turns) === 0,
+  orphanCheck(r1.turns) + ' orphaned',
+);
 check('summary turn is marked', isSummaryTurn(r1.turns[0]));
-check('recent turns kept verbatim', r1.turns[r1.turns.length - 1].role === 'assistant' &&
-  (r1.turns[r1.turns.length - 1] as any).text === 'done two');
+check(
+  'recent turns kept verbatim',
+  r1.turns[r1.turns.length - 1].role === 'assistant' &&
+    (r1.turns[r1.turns.length - 1] as any).text === 'done two',
+);
 check('dropped count reported', r1.droppedTurns === 4, 'got ' + r1.droppedTurns);
-check('recent turns actually survive', r1.turns.length === 1 + (turns.length - r1.droppedTurns),
-  r1.turns.length + ' turns kept from ' + turns.length);
+check(
+  'recent turns actually survive',
+  r1.turns.length === 1 + (turns.length - r1.droppedTurns),
+  r1.turns.length + ' turns kept from ' + turns.length,
+);
 
 // Keeping more turns than exist must be a no-op, not a crash or an empty transcript.
 const r2 = await compactTurns(turns, 50, summarize);
@@ -60,5 +75,7 @@ check('no-op when nothing to compact', !r2.compacted && r2.turns.length === turn
 const r3 = await compactTurns([{ role: 'user', text: 'hi' }], 6, summarize);
 check('no-op on a single turn', !r3.compacted);
 
-console.log(failures.length ? '\n' + failures.length + ' FAILED' : '\nAll compaction checks passed');
+console.log(
+  failures.length ? '\n' + failures.length + ' FAILED' : '\nAll compaction checks passed',
+);
 process.exit(failures.length ? 1 : 0);

@@ -43,15 +43,20 @@ export async function loginToServer(
   const log = opts.log ?? ((m: string) => process.stderr.write(m + '\n'));
   const listener = await startCallbackListener();
 
-  const provider = new FileOAuthProvider(name, listener.redirectUrl, async (url) => {
-    if (opts.onAuthorizationUrl) {
-      await opts.onAuthorizationUrl(url);
-      return;
-    }
-    log('\nOpening your browser to authorize "' + name + '".');
-    log('If it does not open, visit:\n  ' + url.toString() + '\n');
-    openInBrowser(url);
-  }, cfg.scope);
+  const provider = new FileOAuthProvider(
+    name,
+    listener.redirectUrl,
+    async (url) => {
+      if (opts.onAuthorizationUrl) {
+        await opts.onAuthorizationUrl(url);
+        return;
+      }
+      log('\nOpening your browser to authorize "' + name + '".');
+      log('If it does not open, visit:\n  ' + url.toString() + '\n');
+      openInBrowser(url);
+    },
+    cfg.scope,
+  );
 
   try {
     const first = new Client({ name: 'spider-cli', version: '0.1.0' }, { capabilities: {} });

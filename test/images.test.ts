@@ -14,8 +14,15 @@ function check(name: string, cond: boolean, detail?: string) {
 }
 
 const settings: Settings = {
-  model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
-  autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {}, hooks: {},
+  model: 'gpt-5',
+  permissionMode: 'default',
+  allow: [],
+  deny: [],
+  maxTokens: 8192,
+  autoCompactAt: 100000,
+  keepRecentTurns: 6,
+  mcpServers: {},
+  hooks: {},
 };
 
 const agent = new Agent('/tmp', settings, null, 'https://example.invalid/v1', 'unused');
@@ -33,14 +40,21 @@ let captured: any = null;
 };
 
 const noop = {
-  onDelta: () => {}, onAssistantEnd: () => {}, onToolStart: () => {},
-  onToolEnd: () => {}, onNotice: () => {}, requestPermission: async () => 'deny' as const,
+  onDelta: () => {},
+  onAssistantEnd: () => {},
+  onToolStart: () => {},
+  onToolEnd: () => {},
+  onNotice: () => {},
+  requestPermission: async () => 'deny' as const,
 };
 
 await agent.run('what is in this?', noop, undefined, [image]);
 const userTurn: any = captured.turns.find((t: any) => t.role === 'user');
-check('the image is on the user turn', Array.isArray(userTurn.images) && userTurn.images.length === 1,
-  JSON.stringify(userTurn));
+check(
+  'the image is on the user turn',
+  Array.isArray(userTurn.images) && userTurn.images.length === 1,
+  JSON.stringify(userTurn),
+);
 check('it keeps its mime type', userTurn.images[0].mimeType === 'image/png');
 check('the text is unchanged', userTurn.text === 'what is in this?');
 check('base64 was not pasted into the text', !userTurn.text.includes('AAAA'));
@@ -56,8 +70,11 @@ check('anthropic adapter module loads', typeof anthropicMod.createAnthropicProvi
 agent.turns = [];
 await agent.run('no image here', noop);
 const plain: any = captured.turns.find((t: any) => t.role === 'user');
-check('a turn without images carries no images key', plain.images === undefined,
-  JSON.stringify(plain));
+check(
+  'a turn without images carries no images key',
+  plain.images === undefined,
+  JSON.stringify(plain),
+);
 
 console.log('');
 if (failures.length) {

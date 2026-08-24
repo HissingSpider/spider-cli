@@ -8,7 +8,12 @@ const MAX_ATTEMPTS = 3;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function once(url: string, headers: Record<string, string>, body: unknown, signal?: AbortSignal) {
+async function once(
+  url: string,
+  headers: Record<string, string>,
+  body: unknown,
+  signal?: AbortSignal,
+) {
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -32,8 +37,15 @@ export async function postJSON(
       if (!res.ok && RETRYABLE.has(res.status) && attempt < MAX_ATTEMPTS) {
         const wait = 2 ** attempt * 250;
         notice(
-          'HTTP ' + res.status + ' from the gateway — retrying in ' +
-            Math.round(wait / 100) / 10 + 's (attempt ' + (attempt + 1) + '/' + MAX_ATTEMPTS + ')',
+          'HTTP ' +
+            res.status +
+            ' from the gateway — retrying in ' +
+            Math.round(wait / 100) / 10 +
+            's (attempt ' +
+            (attempt + 1) +
+            '/' +
+            MAX_ATTEMPTS +
+            ')',
         );
         await sleep(wait);
         continue;
@@ -55,8 +67,15 @@ export async function postJSON(
       if (attempt === MAX_ATTEMPTS) break;
       const wait = 2 ** attempt * 250;
       notice(
-        'Request failed (' + ((lastErr as any)?.message ?? 'connection error') + ') — retrying in ' +
-          Math.round(wait / 100) / 10 + 's (attempt ' + (attempt + 1) + '/' + MAX_ATTEMPTS + ')',
+        'Request failed (' +
+          ((lastErr as any)?.message ?? 'connection error') +
+          ') — retrying in ' +
+          Math.round(wait / 100) / 10 +
+          's (attempt ' +
+          (attempt + 1) +
+          '/' +
+          MAX_ATTEMPTS +
+          ')',
       );
       await sleep(wait);
     }

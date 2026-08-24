@@ -167,14 +167,10 @@ export class Agent {
 
   /** Spawn a child agent that shares this one's tools, model, and cost tracker. */
   fork(): Agent {
-    const child = new Agent(
-      this.cwd,
-      this.settings,
-      this.projectInstructions,
-      '',
-      '',
-      { depth: this.depth + 1, costTracker: this.cost },
-    );
+    const child = new Agent(this.cwd, this.settings, this.projectInstructions, '', '', {
+      depth: this.depth + 1,
+      costTracker: this.cost,
+    });
     // Reuse the parent's already-constructed providers rather than rebuilding
     // them from credentials the child was not given.
     child.openai = this.openai;
@@ -183,8 +179,7 @@ export class Agent {
     child.mode = this.mode;
     child.tools = Object.fromEntries(
       Object.entries(this.tools).filter(
-        ([name]) =>
-          name !== 'exit_plan_mode' && (name !== 'task' || child.allowSubagents),
+        ([name]) => name !== 'exit_plan_mode' && (name !== 'task' || child.allowSubagents),
       ),
     );
     if (child.allowSubagents && !child.tools.task) child.tools.task = createTaskTool(child);
@@ -225,9 +220,7 @@ export class Agent {
     this.lastInputTokens = 0;
     this.compactFloor = 0;
     this.turnsAtLastCompact = turns.length;
-    events.onNotice(
-      'Compacted ' + droppedTurns + ' of ' + before + ' turns into a summary.',
-    );
+    events.onNotice('Compacted ' + droppedTurns + ' of ' + before + ' turns into a summary.');
   }
 
   /**
@@ -263,10 +256,17 @@ export class Agent {
     signal?: AbortSignal,
     images?: ImageAttachment[],
   ): Promise<void> {
-    const submit = await runHooks('UserPromptSubmit', this.settings, { prompt: userInput }, this.cwd);
+    const submit = await runHooks(
+      'UserPromptSubmit',
+      this.settings,
+      { prompt: userInput },
+      this.cwd,
+    );
     for (const n of submit.notices) events.onNotice(n);
     if (submit.blocked) {
-      events.onNotice('Blocked by a UserPromptSubmit hook: ' + (submit.reason ?? 'no reason given'));
+      events.onNotice(
+        'Blocked by a UserPromptSubmit hook: ' + (submit.reason ?? 'no reason given'),
+      );
       return;
     }
 
@@ -372,7 +372,9 @@ export class Agent {
     }
 
     events.onNotice(
-      'Stopped after ' + maxRounds + ' tool rounds. Send another message to continue,' +
+      'Stopped after ' +
+        maxRounds +
+        ' tool rounds. Send another message to continue,' +
         ' or raise maxTurns in settings.',
     );
   }
@@ -428,9 +430,7 @@ export class Agent {
     if (call.name === 'write_file' || call.name === 'edit_file') {
       const target = String(call.input.path ?? '');
       if (target) {
-        this.checkpoints.backup(
-          path.isAbsolute(target) ? target : path.join(this.cwd, target),
-        );
+        this.checkpoints.backup(path.isAbsolute(target) ? target : path.join(this.cwd, target));
       }
     }
     const result = await impl.run(call.input, this.cwd, events);
@@ -476,8 +476,14 @@ function isConcurrencySafe(call: ToolCall): boolean {
 }
 
 const READ_TOOLS = new Set([
-  'read_file', 'glob', 'grep', 'list_dir', 'web_fetch', 'web_search',
-  'list_mcp_resources', 'read_mcp_resource',
+  'read_file',
+  'glob',
+  'grep',
+  'list_dir',
+  'web_fetch',
+  'web_search',
+  'list_mcp_resources',
+  'read_mcp_resource',
 ]);
 
 export function describe(call: ToolCall): string {

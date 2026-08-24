@@ -55,7 +55,12 @@ for (const suite of suites) {
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);
 console.log(
-  '\n' + (failed.length ? failed.length + ' of ' + suites.length + ' suites FAILED: ' + failed.join(', ')
-    : 'All ' + suites.length + ' suites passed') + '  (' + secs + 's)',
+  '\n' +
+    (failed.length
+      ? failed.length + ' of ' + suites.length + ' suites FAILED: ' + failed.join(', ')
+      : 'All ' + suites.length + ' suites passed') +
+    '  (' +
+    secs +
+    's)',
 );
 process.exit(failed.length ? 1 : 0);

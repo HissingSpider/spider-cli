@@ -30,7 +30,8 @@ export function createExitPlanModeTool(agent: Agent): ToolImpl {
         properties: {
           plan: {
             type: 'string',
-            description: 'The plan, in markdown. Concise and concrete — the steps you intend to take.',
+            description:
+              'The plan, in markdown. Concise and concrete — the steps you intend to take.',
           },
         },
         required: ['plan'],
@@ -66,7 +67,9 @@ export function createExitPlanModeTool(agent: Agent): ToolImpl {
       events.onNotice('Plan approved — permission mode is now ' + answer + '.');
       return {
         output:
-          'Plan approved. You are now in ' + answer + ' mode and may make changes. ' +
+          'Plan approved. You are now in ' +
+          answer +
+          ' mode and may make changes. ' +
           'Carry out the plan without asking again whether to begin.',
         isError: false,
       };

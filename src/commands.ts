@@ -39,7 +39,12 @@ function parse(file: string, name: string): CustomCommand {
 
   if (!description) {
     // Fall back to the first non-empty line, so a bare file still gets a label.
-    description = body.split('\n').find((l) => l.trim())?.trim().slice(0, 60) ?? name;
+    description =
+      body
+        .split('\n')
+        .find((l) => l.trim())
+        ?.trim()
+        .slice(0, 60) ?? name;
   }
 
   return { name, description, body: body.trim(), source: file };

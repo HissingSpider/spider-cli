@@ -96,9 +96,7 @@ function projectedEdit(current: string, input: Record<string, any>): string | nu
   const oldStr = String(input.old_string ?? '');
   const newStr = String(input.new_string ?? '');
   if (!oldStr || !current.includes(oldStr)) return null;
-  return input.replace_all
-    ? current.split(oldStr).join(newStr)
-    : current.replace(oldStr, newStr);
+  return input.replace_all ? current.split(oldStr).join(newStr) : current.replace(oldStr, newStr);
 }
 
 /**

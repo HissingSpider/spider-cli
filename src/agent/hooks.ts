@@ -20,12 +20,7 @@ import type { ToolCall } from '../providers/types.ts';
  *     because a broken hook must not silently become a deny-all
  */
 
-export type HookEvent =
-  | 'SessionStart'
-  | 'UserPromptSubmit'
-  | 'PreToolUse'
-  | 'PostToolUse'
-  | 'Stop';
+export type HookEvent = 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PostToolUse' | 'Stop';
 
 export type HookConfig = {
   /** Regex matched against the tool name. Absent means every call. */

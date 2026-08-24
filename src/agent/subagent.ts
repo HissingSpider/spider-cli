@@ -26,9 +26,12 @@ export function createTaskTool(parent: Agent): ToolImpl {
         'and it returns a single final report — nothing it does mid-task is visible to you.',
         defined.length
           ? 'Available agent types: ' +
-            defined.map((d) => d.name + ' (' + d.description + ')').join('; ') + '.'
+            defined.map((d) => d.name + ' (' + d.description + ')').join('; ') +
+            '.'
           : '',
-      ].filter(Boolean).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' '),
       parameters: {
         type: 'object',
         properties: {
@@ -86,9 +89,7 @@ export function createTaskTool(parent: Agent): ToolImpl {
           onToolEnd: () => {},
           onNotice: (t) => events?.onNotice('  ↳ ' + t),
           // Approvals still route to the user — a subagent gets no extra authority.
-          requestPermission: events
-            ? events.requestPermission
-            : async () => 'deny' as const,
+          requestPermission: events ? events.requestPermission : async () => 'deny' as const,
         });
 
         for (let i = child.turns.length - 1; i >= 0; i--) {

@@ -68,7 +68,9 @@ export class CheckpointStore {
    * Restore to `id`: return the transcript as it was, put the files back, and
    * drop this checkpoint and everything after it.
    */
-  restore(id: number): { turns: Turn[]; restored: string[]; removed: string[]; failed: string[] } | null {
+  restore(
+    id: number,
+  ): { turns: Turn[]; restored: string[]; removed: string[]; failed: string[] } | null {
     const index = this.items.findIndex((c) => c.id === id);
     if (index === -1) return null;
     const cp = this.items[index];

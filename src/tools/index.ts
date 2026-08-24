@@ -12,9 +12,21 @@ const _BASH_TIMEOUT_MS = 120_000;
 // Directories never worth walking. The macOS entries matter because running
 // from $HOME otherwise drags ~/Library and app bundles into every search.
 const SKIP_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', '.venv', 'venv', '__pycache__',
-  'target', '.next', '.cache', 'Caches',
-  'Library', 'Applications', 'Photos Library.photoslibrary', '.Trash',
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  '.venv',
+  'venv',
+  '__pycache__',
+  'target',
+  '.next',
+  '.cache',
+  'Caches',
+  'Library',
+  'Applications',
+  'Photos Library.photoslibrary',
+  '.Trash',
 ]);
 
 /** Walking $HOME reaches six figures of files; stop long before that. */
@@ -59,11 +71,7 @@ export type ToolResult = { output: string; isError: boolean };
 export type ToolImpl = {
   spec: ToolSpec;
   /** `events` is passed so composite tools (task) can narrate and request approval. */
-  run: (
-    input: Record<string, any>,
-    cwd: string,
-    events?: AgentEvents,
-  ) => Promise<ToolResult>;
+  run: (input: Record<string, any>, cwd: string, events?: AgentEvents) => Promise<ToolResult>;
 };
 
 function truncate(s: string): string {
@@ -99,7 +107,7 @@ function globToRegExp(pattern: string): RegExp {
       }
     } else if (c === '?') {
       src += '[^/]';
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: a set of regex metacharacters, not a template placeholder
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: a set of regex metacharacters, not a template placeholder
     } else if ('.+^${}()|[]\\/'.includes(c)) {
       src += '\\' + c;
     } else {
@@ -159,7 +167,10 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (stat.isDirectory()) return fail(input.path + ' is a directory. Use list_dir.');
       if (stat.size > MAX_READ_BYTES) {
         return fail(
-          input.path + ' is ' + Math.round(stat.size / 1e6) + ' MB. Read it in pieces with ' +
+          input.path +
+            ' is ' +
+            Math.round(stat.size / 1e6) +
+            ' MB. Read it in pieces with ' +
             'offset and limit, or search it with grep.',
         );
       }
@@ -168,8 +179,15 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (looksBinary(buf)) {
         const kind = IMAGE_EXT.has(path.extname(file).toLowerCase()) ? 'image' : 'binary';
         return fail(
-          input.path + ' is a ' + kind + ' file (' + stat.size + ' bytes), not text. ' +
-            'This CLI cannot read ' + kind + ' content.',
+          input.path +
+            ' is a ' +
+            kind +
+            ' file (' +
+            stat.size +
+            ' bytes), not text. ' +
+            'This CLI cannot read ' +
+            kind +
+            ' content.',
         );
       }
 
@@ -179,7 +197,13 @@ export const TOOLS: Record<string, ToolImpl> = {
       const slice = lines.slice(start - 1, start - 1 + limit);
       if (!slice.length) {
         return fail(
-          'Offset ' + start + ' is past the end of ' + input.path + ' (' + lines.length + ' lines).',
+          'Offset ' +
+            start +
+            ' is past the end of ' +
+            input.path +
+            ' (' +
+            lines.length +
+            ' lines).',
         );
       }
 
@@ -215,7 +239,8 @@ export const TOOLS: Record<string, ToolImpl> = {
       // Overwriting a file nobody looked at destroys whatever was there.
       if (fs.existsSync(file) && !hasRead(file)) {
         return fail(
-          input.path + ' already exists and has not been read this session. ' +
+          input.path +
+            ' already exists and has not been read this session. ' +
             'Read it first, then write — otherwise this silently discards its contents.',
         );
       }
@@ -249,7 +274,8 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (!fs.existsSync(file)) return fail('File not found: ' + input.path);
       if (!hasRead(file)) {
         return fail(
-          input.path + ' has not been read this session. Read it before editing, so the ' +
+          input.path +
+            ' has not been read this session. Read it before editing, so the ' +
             'replacement is based on what the file actually contains.',
         );
       }
@@ -258,7 +284,10 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (count === 0) return fail('old_string not found in ' + input.path);
       if (count > 1 && !input.replace_all) {
         return fail(
-          'old_string appears ' + count + ' times in ' + input.path +
+          'old_string appears ' +
+            count +
+            ' times in ' +
+            input.path +
             '. Add more context to make it unique, or set replace_all.',
         );
       }
@@ -298,8 +327,12 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (input.run_in_background) {
         const job = startBackground(command, cwd);
         return ok(
-          'Started in the background as ' + job.id + '.\n' +
-            'Poll it with bash_output({ id: "' + job.id + '" }) and stop it with kill_shell.',
+          'Started in the background as ' +
+            job.id +
+            '.\n' +
+            'Poll it with bash_output({ id: "' +
+            job.id +
+            '" }) and stop it with kill_shell.',
         );
       }
 
@@ -343,7 +376,9 @@ export const TOOLS: Record<string, ToolImpl> = {
       if (!result) {
         const running = listJobs();
         return fail(
-          'No background job "' + id + '".' +
+          'No background job "' +
+            id +
+            '".' +
             (running.length ? ' Known jobs: ' + running.map((j) => j.id).join(', ') : ''),
         );
       }
@@ -367,7 +402,9 @@ export const TOOLS: Record<string, ToolImpl> = {
     },
     async run(input) {
       const id = String(input.id ?? '');
-      return killJob(id) ? ok('Sent SIGTERM to ' + id + '.') : fail('No background job "' + id + '".');
+      return killJob(id)
+        ? ok('Sent SIGTERM to ' + id + '.')
+        : fail('No background job "' + id + '".');
     },
   },
 

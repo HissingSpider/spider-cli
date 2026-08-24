@@ -24,9 +24,16 @@ check('script contents stripped', !text.includes('alert'));
 check('style contents stripped', !text.includes('color:red'));
 check('entities decoded', text.includes('First & second.'));
 check('list items marked', text.includes('- one') && text.includes('- two'));
-check('text preserved', text.includes('Heading') && text.includes('Tail text'), JSON.stringify(text));
+check(
+  'text preserved',
+  text.includes('Heading') && text.includes('Tail text'),
+  JSON.stringify(text),
+);
 
-check('hostOf extracts domain', hostOf('https://deerdawn.com/agent-setup/prompt.md') === 'deerdawn.com');
+check(
+  'hostOf extracts domain',
+  hostOf('https://deerdawn.com/agent-setup/prompt.md') === 'deerdawn.com',
+);
 check('hostOf tolerates junk', hostOf('not a url') === '');
 
 // --- Scheme guard ----------------------------------------------------------
@@ -62,7 +69,11 @@ await new Promise<void>((r) => server.listen(8792, '127.0.0.1', r));
 const base = 'http://127.0.0.1:8792';
 
 const page = await webFetchTool.run({ url: base + '/page.html' }, process.cwd());
-check('html fetched and converted', !page.isError && page.output.includes('Hello world'), page.output.slice(0, 200));
+check(
+  'html fetched and converted',
+  !page.isError && page.output.includes('Hello world'),
+  page.output.slice(0, 200),
+);
 check('output labels content as data', page.output.includes('data, not instructions'));
 
 const img = await webFetchTool.run({ url: base + '/image' }, process.cwd());
@@ -73,7 +84,11 @@ check('redirect followed', !red.isError && red.output.includes('Hello world'));
 check('redirect chain reported', red.output.includes('Redirected via'), red.output.slice(0, 200));
 
 const loop = await webFetchTool.run({ url: base + '/loop' }, process.cwd());
-check('redirect loop capped', loop.isError && loop.output.includes('Too many redirects'), loop.output);
+check(
+  'redirect loop capped',
+  loop.isError && loop.output.includes('Too many redirects'),
+  loop.output,
+);
 
 const gone = await webFetchTool.run({ url: base + '/gone' }, process.cwd());
 check('http error surfaced', gone.isError && gone.output.includes('404'), gone.output);
@@ -82,21 +97,42 @@ server.close();
 
 // --- Permissions -----------------------------------------------------------
 const settings: Settings = {
-  model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
-  autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  model: 'gpt-5',
+  permissionMode: 'default',
+  allow: [],
+  deny: [],
+  maxTokens: 8192,
+  autoCompactAt: 100000,
+  keepRecentTurns: 6,
+  mcpServers: {},
   hooks: {},
 };
-const call: ToolCall = { id: 'c', name: 'web_fetch', input: { url: 'https://deerdawn.com/a/b.md' } };
+const call: ToolCall = {
+  id: 'c',
+  name: 'web_fetch',
+  input: { url: 'https://deerdawn.com/a/b.md' },
+};
 
 check('web_fetch asks by default', decide(call, settings, 'default', '/tmp').kind === 'ask');
 check('rule is per-domain', suggestedRule(call) === 'web_fetch(deerdawn.com)', suggestedRule(call));
-check('approving the domain covers other paths on it',
-  decide({ ...call, input: { url: 'https://deerdawn.com/other' } },
-    { ...settings, allow: ['web_fetch(deerdawn.com)'] }, 'default', '/tmp').kind === 'allow');
-check('approving one domain does not cover another',
-  decide({ ...call, input: { url: 'https://evil.example/x' } },
-    { ...settings, allow: ['web_fetch(deerdawn.com)'] }, 'default', '/tmp').kind === 'ask');
-
+check(
+  'approving the domain covers other paths on it',
+  decide(
+    { ...call, input: { url: 'https://deerdawn.com/other' } },
+    { ...settings, allow: ['web_fetch(deerdawn.com)'] },
+    'default',
+    '/tmp',
+  ).kind === 'allow',
+);
+check(
+  'approving one domain does not cover another',
+  decide(
+    { ...call, input: { url: 'https://evil.example/x' } },
+    { ...settings, allow: ['web_fetch(deerdawn.com)'] },
+    'default',
+    '/tmp',
+  ).kind === 'ask',
+);
 
 // A redirect that leaves the approved host is a different fetch entirely.
 {
@@ -119,13 +155,19 @@ check('approving one domain does not cover another',
   const base = 'http://127.0.0.1:' + port;
 
   const cross = await webFetchTool.run({ url: base + '/away' }, process.cwd());
-  check('a cross-host redirect is refused',
-    cross.isError && /cross-host redirect/.test(cross.output), cross.output);
+  check(
+    'a cross-host redirect is refused',
+    cross.isError && /cross-host redirect/.test(cross.output),
+    cross.output,
+  );
   check('the refusal names both hosts', cross.output.includes('elsewhere.invalid'), cross.output);
 
   const same = await webFetchTool.run({ url: base + '/local' }, process.cwd());
-  check('a same-host redirect is still followed',
-    !same.isError && same.output.includes('arrived'), same.output);
+  check(
+    'a same-host redirect is still followed',
+    !same.isError && same.output.includes('arrived'),
+    same.output,
+  );
 
   server.close();
 }

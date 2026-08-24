@@ -40,10 +40,7 @@ function resolveShell(): { path: string; args: string[] } {
       const name = candidate.split('/').pop() ?? '';
       // zsh -f and bash --noprofile --norc both skip user startup files, which
       // keeps a stray alias or prompt hook out of the agent's command output.
-      const args =
-        name === 'zsh' ? ['-f']
-        : name === 'bash' ? ['--noprofile', '--norc']
-        : [];
+      const args = name === 'zsh' ? ['-f'] : name === 'bash' ? ['--noprofile', '--norc'] : [];
       return { path: candidate, args };
     } catch {
       /* not executable or not present; try the next */
@@ -289,7 +286,9 @@ export function listJobs(): BackgroundJob[] {
 }
 
 /** Output since the last read — polling should not re-deliver what was seen. */
-export function readJob(id: string): { text: string; running: boolean; exitCode: number | null } | null {
+export function readJob(
+  id: string,
+): { text: string; running: boolean; exitCode: number | null } | null {
   const job = jobs.get(id);
   if (!job) return null;
   const text = job.output.slice(job.read);

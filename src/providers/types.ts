@@ -47,7 +47,10 @@ export interface Provider {
  * body has to be inspected directly.
  */
 export class SpiderAIError extends Error {
-  constructor(message: string, readonly code?: number) {
+  constructor(
+    message: string,
+    readonly code?: number,
+  ) {
     super(message);
     this.name = 'SpiderAIError';
   }
@@ -56,7 +59,7 @@ export class SpiderAIError extends Error {
 export function throwIfErrorBody(body: any): void {
   if (body && typeof body === 'object' && body.error) {
     const e = body.error;
-    const msg = typeof e === 'string' ? e : e.message ?? JSON.stringify(e);
+    const msg = typeof e === 'string' ? e : (e.message ?? JSON.stringify(e));
     throw new SpiderAIError(msg, typeof e === 'object' ? e.code : undefined);
   }
   if (body && typeof body === 'object' && typeof body.detail === 'string') {

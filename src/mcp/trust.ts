@@ -116,7 +116,9 @@ export async function gateDirectory(
   if (!opts.interactive) {
     if (findings.length) {
       process.stderr.write(
-        'Untrusted directory with agent configuration (' + findings.join(', ') + ').\n' +
+        'Untrusted directory with agent configuration (' +
+          findings.join(', ') +
+          ').\n' +
           'Its instructions and servers are ignored. Approve with: spider trust\n\n',
       );
     }
@@ -124,9 +126,13 @@ export async function gateDirectory(
   }
 
   process.stdout.write(
-    '\nFirst run in ' + cwd + '\n' +
+    '\nFirst run in ' +
+      cwd +
+      '\n' +
       (findings.length
-        ? 'It carries agent configuration: ' + findings.join(', ') + '.\n' +
+        ? 'It carries agent configuration: ' +
+          findings.join(', ') +
+          '.\n' +
           'Those files can direct the agent, so only continue if you trust this project.\n'
         : 'No agent configuration found here.\n'),
   );
@@ -160,14 +166,20 @@ export async function gateUntrusted(
   const entries = Object.entries(servers ?? {});
   const unknown = entries.filter(([name, cfg]) => cfg.enabled !== false && !isTrusted(name, cfg));
   if (!unknown.length) {
-    return { approved: Object.fromEntries(entries.filter(([, c]) => c.enabled !== false)), skipped: [] };
+    return {
+      approved: Object.fromEntries(entries.filter(([, c]) => c.enabled !== false)),
+      skipped: [],
+    };
   }
 
   if (!opts.interactive) {
     const skipped = unknown.map(([n]) => n);
     process.stderr.write(
-      'Skipping unapproved MCP server' + (skipped.length === 1 ? '' : 's') + ': ' +
-        skipped.join(', ') + '\n' +
+      'Skipping unapproved MCP server' +
+        (skipped.length === 1 ? '' : 's') +
+        ': ' +
+        skipped.join(', ') +
+        '\n' +
         'Approve with: spider mcp trust <name>\n\n',
     );
     return {
@@ -179,9 +191,11 @@ export async function gateUntrusted(
   }
 
   process.stdout.write(
-    '\nNew MCP server' + (unknown.length === 1 ? '' : 's') + ' in this configuration:\n' +
+    '\nNew MCP server' +
+      (unknown.length === 1 ? '' : 's') +
+      ' in this configuration:\n' +
       unknown.map(([n, c]) => describeServer(n, c)).join('\n') +
-      '\n\nA server runs with your permissions and its tool descriptions go into the model\'s\n' +
+      "\n\nA server runs with your permissions and its tool descriptions go into the model's\n" +
       'prompt. Only approve servers you recognise.\n',
   );
 

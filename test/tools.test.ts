@@ -64,8 +64,11 @@ await new Promise((r) => setTimeout(r, 600));
 const first = await run('bash_output', { id: jobId });
 check('output can be polled', first.output.includes('tick 1'), first.output);
 const second = await run('bash_output', { id: jobId });
-check('a second poll does not repeat what was already read',
-  !second.output.includes('tick 1'), second.output);
+check(
+  'a second poll does not repeat what was already read',
+  !second.output.includes('tick 1'),
+  second.output,
+);
 check('an unknown job id is an error', (await run('bash_output', { id: 'bg_999' })).isError);
 check('killing an unknown job is an error', (await run('kill_shell', { id: 'bg_999' })).isError);
 
@@ -75,11 +78,18 @@ fs.writeFileSync(
   Array.from({ length: 50 }, (_, i) => 'line ' + (i + 1)).join('\n'),
 );
 const head = await run('read_file', { path: 'big.txt', limit: 3 });
-check('limit truncates', head.output.includes('line 3') && !head.output.includes('line 4'), head.output);
+check(
+  'limit truncates',
+  head.output.includes('line 3') && !head.output.includes('line 4'),
+  head.output,
+);
 check('the truncation is reported', head.output.includes('of 50'), head.output);
 const mid = await run('read_file', { path: 'big.txt', offset: 10, limit: 2 });
-check('offset starts where asked',
-  mid.output.includes('line 10') && !mid.output.includes('line 9'), mid.output);
+check(
+  'offset starts where asked',
+  mid.output.includes('line 10') && !mid.output.includes('line 9'),
+  mid.output,
+);
 check('line numbers reflect the offset', /10\s+line 10/.test(mid.output), mid.output);
 const past = await run('read_file', { path: 'big.txt', offset: 999 });
 check('an offset past the end is an error', past.isError, past.output);
@@ -93,24 +103,34 @@ console.log('\nread before write');
 clearReadFiles();
 fs.writeFileSync(path.join(dir, 'existing.ts'), 'const a = 1;\n');
 const blindEdit = await run('edit_file', {
-  path: 'existing.ts', old_string: 'const a = 1;', new_string: 'const a = 2;',
+  path: 'existing.ts',
+  old_string: 'const a = 1;',
+  new_string: 'const a = 2;',
 });
 check('editing an unread file is refused', blindEdit.isError, blindEdit.output);
-check('the file is untouched',
-  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8') === 'const a = 1;\n');
+check(
+  'the file is untouched',
+  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8') === 'const a = 1;\n',
+);
 
 const blindWrite = await run('write_file', { path: 'existing.ts', content: 'wiped' });
 check('overwriting an unread file is refused', blindWrite.isError, blindWrite.output);
-check('it is still untouched',
-  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8') === 'const a = 1;\n');
+check(
+  'it is still untouched',
+  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8') === 'const a = 1;\n',
+);
 
 await run('read_file', { path: 'existing.ts' });
 const goodEdit = await run('edit_file', {
-  path: 'existing.ts', old_string: 'const a = 1;', new_string: 'const a = 2;',
+  path: 'existing.ts',
+  old_string: 'const a = 1;',
+  new_string: 'const a = 2;',
 });
 check('editing after reading works', !goodEdit.isError, goodEdit.output);
-check('the change landed',
-  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8').includes('const a = 2;'));
+check(
+  'the change landed',
+  fs.readFileSync(path.join(dir, 'existing.ts'), 'utf8').includes('const a = 2;'),
+);
 
 const newFile = await run('write_file', { path: 'brand-new.ts', content: 'x' });
 check('writing a new file needs no prior read', !newFile.isError, newFile.output);

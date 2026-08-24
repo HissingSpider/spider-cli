@@ -19,21 +19,29 @@ function check(name: string, cond: boolean, detail?: string) {
 
 check('a shell was resolved', typeof SHELL.path === 'string' && SHELL.path.length > 0, SHELL.path);
 
-check('the resolved shell is executable', (() => {
-  try {
-    accessSync(SHELL.path, constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-})(), SHELL.path);
+check(
+  'the resolved shell is executable',
+  (() => {
+    try {
+      accessSync(SHELL.path, constants.X_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  })(),
+  SHELL.path,
+);
 
 const name = SHELL.path.split('/').pop() ?? '';
-check('startup files are skipped for zsh and bash', (() => {
-  if (name === 'zsh') return SHELL.args.includes('-f');
-  if (name === 'bash') return SHELL.args.includes('--noprofile');
-  return SHELL.args.length === 0; // sh understands neither
-})(), name + ' ' + JSON.stringify(SHELL.args));
+check(
+  'startup files are skipped for zsh and bash',
+  (() => {
+    if (name === 'zsh') return SHELL.args.includes('-f');
+    if (name === 'bash') return SHELL.args.includes('--noprofile');
+    return SHELL.args.length === 0; // sh understands neither
+  })(),
+  name + ' ' + JSON.stringify(SHELL.args),
+);
 
 check('sh is never given flags it cannot parse', !(name === 'sh' && SHELL.args.length > 0));
 
@@ -51,7 +59,11 @@ function resolveUnder(shell: string | undefined): { path: string; args: string[]
 
   const res = spawnSync(
     process.execPath,
-    [path.join(import.meta.dirname, '..', 'node_modules', 'tsx', 'dist', 'cli.mjs'), '--eval', script],
+    [
+      path.join(import.meta.dirname, '..', 'node_modules', 'tsx', 'dist', 'cli.mjs'),
+      '--eval',
+      script,
+    ],
     { encoding: 'utf8', env },
   );
   const line = (res.stdout ?? '').trim().split('\n').pop() ?? '{}';
@@ -76,14 +88,16 @@ for (const candidate of ['/bin/bash', '/bin/sh', '/bin/zsh']) {
   }
   const r = resolveUnder(candidate);
   check('SPIDER_SHELL=' + candidate + ' is honoured', r.path === candidate, r.path);
-  check('a command actually runs under ' + candidate, r.ranOk,
-    JSON.stringify(r));
+  check('a command actually runs under ' + candidate, r.ranOk, JSON.stringify(r));
 }
 
 // An override pointing at nothing must fall back rather than crash the agent.
 const bogus = resolveUnder('/nonexistent/shell/xyz');
-check('a bogus SPIDER_SHELL falls back to a working shell', bogus.path !== '/nonexistent/shell/xyz' && bogus.ranOk,
-  JSON.stringify(bogus));
+check(
+  'a bogus SPIDER_SHELL falls back to a working shell',
+  bogus.path !== '/nonexistent/shell/xyz' && bogus.ranOk,
+  JSON.stringify(bogus),
+);
 
 console.log(failures.length ? '\n' + failures.length + ' FAILED' : '\nAll shell checks passed');
 process.exit(failures.length ? 1 : 0);

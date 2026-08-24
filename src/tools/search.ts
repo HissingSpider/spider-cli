@@ -35,14 +35,18 @@ function resolveConfig(cfg: SearchConfig | undefined): Required<SearchConfig> | 
   if (!provider) return null;
 
   const apiKey =
-    cfg?.apiKey ??
-    (provider === 'brave' ? process.env.BRAVE_API_KEY : process.env.TAVILY_API_KEY);
+    cfg?.apiKey ?? (provider === 'brave' ? process.env.BRAVE_API_KEY : process.env.TAVILY_API_KEY);
   if (!apiKey) return null;
 
   return { provider, apiKey, count: Math.min(cfg?.count ?? 5, MAX_RESULTS) };
 }
 
-async function brave(query: string, key: string, count: number, signal: AbortSignal): Promise<SearchHit[]> {
+async function brave(
+  query: string,
+  key: string,
+  count: number,
+  signal: AbortSignal,
+): Promise<SearchHit[]> {
   const url = new URL('https://api.search.brave.com/res/v1/web/search');
   url.searchParams.set('q', query);
   url.searchParams.set('count', String(count));
@@ -59,7 +63,12 @@ async function brave(query: string, key: string, count: number, signal: AbortSig
   }));
 }
 
-async function tavily(query: string, key: string, count: number, signal: AbortSignal): Promise<SearchHit[]> {
+async function tavily(
+  query: string,
+  key: string,
+  count: number,
+  signal: AbortSignal,
+): Promise<SearchHit[]> {
   const res = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     signal,
@@ -115,7 +124,10 @@ export function createSearchTool(cfg: SearchConfig | undefined): ToolImpl {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
-        const count = Math.min(Number(input.count ?? resolved.count) || resolved.count, MAX_RESULTS);
+        const count = Math.min(
+          Number(input.count ?? resolved.count) || resolved.count,
+          MAX_RESULTS,
+        );
         const hits =
           resolved.provider === 'brave'
             ? await brave(query, resolved.apiKey, count, controller.signal)

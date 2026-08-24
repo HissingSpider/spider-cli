@@ -65,7 +65,10 @@ function parseArgs(argv: string[]): Args {
     outputFormat: 'text',
   };
   const list = (v: string | undefined) =>
-    (v ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+    (v ?? '')
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -149,7 +152,11 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
     for (const n of names) {
       const cfg = servers[n];
       const kind = isHttpConfig(cfg) ? cfg.url : cfg.command;
-      const auth = isHttpConfig(cfg) ? (hasStoredTokens(n) ? '  [authorized]' : '  [no token]') : '';
+      const auth = isHttpConfig(cfg)
+        ? hasStoredTokens(n)
+          ? '  [authorized]'
+          : '  [no token]'
+        : '';
       const off = cfg.enabled === false ? '  [disabled]' : '';
       const trusted = isTrusted(n, cfg) ? '' : '  [not trusted]';
       console.log('  ' + n.padEnd(20) + kind + auth + off + trusted);
@@ -159,7 +166,9 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
 
   if (sub === 'logout') {
     if (!name) return void console.error('Usage: spider mcp logout <server>');
-    console.log(forgetServer(name) ? 'Removed stored credentials for ' + name : 'Nothing stored for ' + name);
+    console.log(
+      forgetServer(name) ? 'Removed stored credentials for ' + name : 'Nothing stored for ' + name,
+    );
     return;
   }
 
@@ -202,8 +211,13 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
     }
     for (const n of names) addMcpServer(cwd, n, found[n]);
     console.log(
-      'Imported ' + names.length + ' server' + (names.length === 1 ? '' : 's') +
-        ' into .mcp.json: ' + names.join(', ') + '\n' +
+      'Imported ' +
+        names.length +
+        ' server' +
+        (names.length === 1 ? '' : 's') +
+        ' into .mcp.json: ' +
+        names.join(', ') +
+        '\n' +
         'They are not trusted yet — you will be asked on the next run.',
     );
     return;
@@ -228,8 +242,10 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
   if (sub === 'login') {
     if (!name) return void console.error('Usage: spider mcp login <server>');
     const cfg = servers[name];
-    if (!cfg) return void console.error('No MCP server named "' + name + '" in .spider/settings.json');
-    if (!isHttpConfig(cfg)) return void console.error('"' + name + '" is a stdio server; it does not use OAuth.');
+    if (!cfg)
+      return void console.error('No MCP server named "' + name + '" in .spider/settings.json');
+    if (!isHttpConfig(cfg))
+      return void console.error('"' + name + '" is a stdio server; it does not use OAuth.');
 
     const result = await loginToServer(name, cfg);
     if (result.ok) {
@@ -275,9 +291,7 @@ function printBanner(
   console.log('╭' + title + '─'.repeat(width - title.length - 1) + '╮');
   for (const line of body) console.log('│' + line.padEnd(width) + '│');
   console.log('╰' + '─'.repeat(width) + '╯');
-  console.log(
-    '  /help for commands · shift+tab cycles permission mode · ctrl+o expands output\n',
-  );
+  console.log('  /help for commands · shift+tab cycles permission mode · ctrl+o expands output\n');
 }
 
 async function main() {
@@ -318,7 +332,9 @@ async function main() {
   const atHome = path.resolve(cwd) === path.resolve(os.homedir());
   if (atHome) {
     console.error(
-      'Warning: running in your home directory, so the whole of ' + cwd + ' is the workspace.\n' +
+      'Warning: running in your home directory, so the whole of ' +
+        cwd +
+        ' is the workspace.\n' +
         'Searches will be slow and wide. cd into a project directory instead.\n',
     );
   }
@@ -330,7 +346,7 @@ async function main() {
   const settings = trusted ? loadSettings(cwd) : loadSettings(os.tmpdir());
   if (!trusted) {
     console.error(
-      'Running untrusted: this project\'s SPIDER.md, MCP servers and rules are ignored.\n' +
+      "Running untrusted: this project's SPIDER.md, MCP servers and rules are ignored.\n" +
         'Run `spider trust` here to change that.\n',
     );
   }
@@ -474,7 +490,8 @@ async function main() {
         requestPermission: async (call) => {
           refusals++;
           const msg =
-            'needs approval, refused in headless mode: ' + describe(call) +
+            'needs approval, refused in headless mode: ' +
+            describe(call) +
             ' — pre-approve it with --allowed-tools, or use --mode acceptEdits / auto.';
           if (streamJson) emit({ type: 'permission_denied', name: call.name, message: msg });
           else if (!json) process.stderr.write('✗ ' + msg + '\n');

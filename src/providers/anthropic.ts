@@ -58,9 +58,7 @@ export function createAnthropicProvider(baseUrl: string, apiKey: string): Provid
         // turn, and they are the bulk of the input. Marking the end of the
         // system block as a cache breakpoint means later rounds re-read it from
         // cache instead of paying for it again.
-        system: [
-          { type: 'text', text: opts.system, cache_control: { type: 'ephemeral' } },
-        ],
+        system: [{ type: 'text', text: opts.system, cache_control: { type: 'ephemeral' } }],
         messages: toMessages(opts.turns),
         max_tokens: opts.maxTokens,
       };

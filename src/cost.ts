@@ -41,9 +41,17 @@ export class CostTracker {
   summary(): string {
     const usd = this.estimateUSD();
     return (
-      this.input.toLocaleString() + ' in / ' + this.output.toLocaleString() + ' out tokens' +
-      ' across ' + this.turns + ' model call' + (this.turns === 1 ? '' : 's') +
-      '\nEstimated at list prices: $' + usd.toFixed(4) + ' (SpiderAI does not bill you for this)'
+      this.input.toLocaleString() +
+      ' in / ' +
+      this.output.toLocaleString() +
+      ' out tokens' +
+      ' across ' +
+      this.turns +
+      ' model call' +
+      (this.turns === 1 ? '' : 's') +
+      '\nEstimated at list prices: $' +
+      usd.toFixed(4) +
+      ' (SpiderAI does not bill you for this)'
     );
   }
 }

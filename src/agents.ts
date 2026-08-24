@@ -38,7 +38,10 @@ function parse(file: string, fallbackName: string): AgentDefinition {
   }
 
   const tools = meta.tools
-    ? meta.tools.split(',').map((t) => t.trim()).filter(Boolean)
+    ? meta.tools
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
     : undefined;
 
   return {

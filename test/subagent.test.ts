@@ -30,20 +30,36 @@ You review code. You do not change it.
 );
 
 const settings: Settings = {
-  model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
-  autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {}, hooks: {},
+  model: 'gpt-5',
+  permissionMode: 'default',
+  allow: [],
+  deny: [],
+  maxTokens: 8192,
+  autoCompactAt: 100000,
+  keepRecentTurns: 6,
+  mcpServers: {},
+  hooks: {},
 };
 
 console.log('\ndefinitions');
 const defs = loadAgents(dir);
 const reviewer = defs.find((d) => d.name === 'reviewer');
 check('a definition file is found', !!reviewer, JSON.stringify(defs.map((d) => d.name)));
-check('frontmatter description is read',
-  reviewer?.description === 'Reads code and reports, never edits', reviewer?.description);
-check('the tool list is parsed',
-  JSON.stringify(reviewer?.tools) === '["read_file","grep","glob"]', JSON.stringify(reviewer?.tools));
-check('the body becomes the prompt',
-  Boolean(reviewer?.prompt.includes('You do not change it')), reviewer?.prompt);
+check(
+  'frontmatter description is read',
+  reviewer?.description === 'Reads code and reports, never edits',
+  reviewer?.description,
+);
+check(
+  'the tool list is parsed',
+  JSON.stringify(reviewer?.tools) === '["read_file","grep","glob"]',
+  JSON.stringify(reviewer?.tools),
+);
+check(
+  'the body becomes the prompt',
+  Boolean(reviewer?.prompt.includes('You do not change it')),
+  reviewer?.prompt,
+);
 
 console.log('\ndepth');
 const root = new Agent(dir, settings, null, 'https://example.invalid/v1', 'unused');

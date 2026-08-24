@@ -187,7 +187,14 @@ export function toMarkdown(session: SavedSession): string {
     else if (turn.role === 'assistant') {
       if (turn.text.trim()) out.push('## Assistant', '', turn.text, '');
       for (const call of turn.toolCalls) {
-        out.push('### Tool: `' + call.name + '`', '', '```json', JSON.stringify(call.input, null, 2), '```', '');
+        out.push(
+          '### Tool: `' + call.name + '`',
+          '',
+          '```json',
+          JSON.stringify(call.input, null, 2),
+          '```',
+          '',
+        );
       }
     } else {
       out.push(

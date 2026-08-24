@@ -9,7 +9,14 @@ const TIMEOUT_MS = 20_000;
 const TEXTUAL = /^(text\/|application\/(json|xml|xhtml\+xml|javascript|x-ndjson)|[^;]*\+json)/i;
 
 const ENTITIES: Record<string, string> = {
-  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'", '#x27': "'",
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  '#39': "'",
+  '#x27': "'",
 };
 
 function decodeEntities(s: string): string {
@@ -87,7 +94,10 @@ export const webFetchTool: ToolImpl = {
     // file:, data: and friends would turn a "web" fetch into a local read that
     // sidesteps workspace scoping entirely.
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return { output: 'Only http and https URLs are allowed (got ' + url.protocol + ')', isError: true };
+      return {
+        output: 'Only http and https URLs are allowed (got ' + url.protocol + ')',
+        isError: true,
+      };
     }
 
     const controller = new AbortController();
@@ -105,14 +115,20 @@ export const webFetchTool: ToolImpl = {
         res = await fetch(current, {
           redirect: 'manual',
           signal: controller.signal,
-          headers: { 'User-Agent': 'spider-cli/0.1', Accept: 'text/html,text/plain,application/json;q=0.9,*/*;q=0.5' },
+          headers: {
+            'User-Agent': 'spider-cli/0.1',
+            Accept: 'text/html,text/plain,application/json;q=0.9,*/*;q=0.5',
+          },
         });
         if (res.status >= 300 && res.status < 400) {
           const loc = res.headers.get('location');
           if (!loc) break;
           const next = new URL(loc, current);
           if (next.protocol !== 'http:' && next.protocol !== 'https:') {
-            return { output: 'Refused redirect to non-http scheme: ' + next.protocol, isError: true };
+            return {
+              output: 'Refused redirect to non-http scheme: ' + next.protocol,
+              isError: true,
+            };
           }
           // Approval was granted for one host. A redirect to a different one
           // is a different fetch, and it has not been approved — this is the
@@ -120,8 +136,14 @@ export const webFetchTool: ToolImpl = {
           if (next.host !== originalHost) {
             return {
               output:
-                'Refused a cross-host redirect: ' + originalHost + ' → ' + next.host + '\n' +
-                'Approval is per-domain. Fetch ' + next.toString() + ' directly if that is ' +
+                'Refused a cross-host redirect: ' +
+                originalHost +
+                ' → ' +
+                next.host +
+                '\n' +
+                'Approval is per-domain. Fetch ' +
+                next.toString() +
+                ' directly if that is ' +
                 'what you want, and it will be approved on its own terms.',
               isError: true,
             };
@@ -138,12 +160,18 @@ export const webFetchTool: ToolImpl = {
         return { output: 'Too many redirects (over ' + MAX_REDIRECTS + ')', isError: true };
       }
       if (!res.ok) {
-        return { output: 'HTTP ' + res.status + ' ' + res.statusText + ' from ' + current, isError: true };
+        return {
+          output: 'HTTP ' + res.status + ' ' + res.statusText + ' from ' + current,
+          isError: true,
+        };
       }
 
       const ctype = res.headers.get('content-type') ?? '';
       if (ctype && !TEXTUAL.test(ctype)) {
-        return { output: 'Refusing non-text content (' + ctype.split(';')[0] + ') from ' + current, isError: true };
+        return {
+          output: 'Refusing non-text content (' + ctype.split(';')[0] + ') from ' + current,
+          isError: true,
+        };
       }
 
       // Read with a hard byte ceiling rather than trusting content-length.
@@ -188,7 +216,10 @@ export const webFetchTool: ToolImpl = {
         isError: false,
       };
     } catch (err: any) {
-      const msg = err?.name === 'AbortError' ? 'Timed out after ' + TIMEOUT_MS + 'ms' : err?.message ?? String(err);
+      const msg =
+        err?.name === 'AbortError'
+          ? 'Timed out after ' + TIMEOUT_MS + 'ms'
+          : (err?.message ?? String(err));
       return { output: 'Fetch failed: ' + msg, isError: true };
     } finally {
       clearTimeout(timer);

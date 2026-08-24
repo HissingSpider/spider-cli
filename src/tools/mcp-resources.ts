@@ -39,7 +39,11 @@ export function createResourceTools(mcp: McpConnection): Record<string, ToolImpl
           output: all
             .map(
               (r) =>
-                r.server + '  ' + r.uri + '  ' + r.name +
+                r.server +
+                '  ' +
+                r.uri +
+                '  ' +
+                r.name +
                 (r.mimeType ? '  (' + r.mimeType + ')' : '') +
                 (r.description ? '\n    ' + r.description : ''),
             )

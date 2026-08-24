@@ -287,7 +287,7 @@ export function Input({
         const prefix = i === 0 ? '> ' : '  ';
         const isCursorRow = i === row;
         const before = isCursorRow ? line.slice(0, col) : line;
-        const at = isCursorRow ? line[col] ?? ' ' : '';
+        const at = isCursorRow ? (line[col] ?? ' ') : '';
         const after = isCursorRow ? line.slice(col + 1) : '';
         return (
           <Box key={i}>

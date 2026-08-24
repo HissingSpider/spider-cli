@@ -107,9 +107,10 @@ export type McpHooks = {
     maxTokens?: number;
   }) => Promise<string>;
   /** A server asked the user a structured question. */
-  onElicit?: (req: { server: string; message: string }) => Promise<
-    { action: 'accept'; content: Record<string, unknown> } | { action: 'decline' }
-  >;
+  onElicit?: (req: {
+    server: string;
+    message: string;
+  }) => Promise<{ action: 'accept'; content: Record<string, unknown> } | { action: 'decline' }>;
 };
 
 export type McpConnection = {
@@ -119,7 +120,12 @@ export type McpConnection = {
   prompts: () => McpPromptRef[];
   getPrompt: (server: string, name: string, args?: Record<string, string>) => Promise<string>;
   /** Argument autocomplete for a prompt, where the server offers it. */
-  complete: (server: string, promptName: string, argName: string, value: string) => Promise<string[]>;
+  complete: (
+    server: string,
+    promptName: string,
+    argName: string,
+    value: string,
+  ) => Promise<string[]>;
   readResource: (server: string, uri: string) => Promise<string>;
   close: () => Promise<void>;
 };
@@ -192,20 +198,32 @@ export function textOf(result: any): string {
         if (block.resource?.text !== undefined) parts.push(String(block.resource.text));
         else {
           parts.push(
-            '[embedded ' + (block.resource?.mimeType ?? 'binary') + ' resource: ' +
-              (block.resource?.uri ?? 'unknown') + ']',
+            '[embedded ' +
+              (block.resource?.mimeType ?? 'binary') +
+              ' resource: ' +
+              (block.resource?.uri ?? 'unknown') +
+              ']',
           );
         }
         break;
       case 'resource_link':
         parts.push(
-          '[resource: ' + (block.name ?? block.uri) + ' — ' + block.uri +
-            (block.description ? ' — ' + block.description : '') + ']',
+          '[resource: ' +
+            (block.name ?? block.uri) +
+            ' — ' +
+            block.uri +
+            (block.description ? ' — ' + block.description : '') +
+            ']',
         );
         break;
       case 'image':
-        parts.push('[image, ' + (block.mimeType ?? 'unknown type') + ', ' +
-          Math.round(String(block.data ?? '').length * 0.75 / 1024) + ' KB]');
+        parts.push(
+          '[image, ' +
+            (block.mimeType ?? 'unknown type') +
+            ', ' +
+            Math.round((String(block.data ?? '').length * 0.75) / 1024) +
+            ' KB]',
+        );
         break;
       case 'audio':
         parts.push('[audio, ' + (block.mimeType ?? 'unknown type') + ']');

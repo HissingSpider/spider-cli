@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { App } from '../src/ui/App.tsx';
@@ -123,28 +122,40 @@ await sleep(120);
 check('typed text is shown', strip(lastFrame()).includes('some half-typed thing'));
 stdin.write(CTRL_C);
 await sleep(150);
-check('ctrl+c clears the input line', !strip(lastFrame()).includes('some half-typed thing'),
-  strip(lastFrame()));
+check(
+  'ctrl+c clears the input line',
+  !strip(lastFrame()).includes('some half-typed thing'),
+  strip(lastFrame()),
+);
 check('clearing does not arm an exit', !strip(lastFrame()).includes('again to exit'));
 
 // On an empty line the first ctrl+c only warns.
 stdin.write(CTRL_C);
 await sleep(150);
-check('ctrl+c on an empty line warns instead of exiting',
-  strip(lastFrame()).includes('Press ctrl+c again to exit'), strip(lastFrame()));
+check(
+  'ctrl+c on an empty line warns instead of exiting',
+  strip(lastFrame()).includes('Press ctrl+c again to exit'),
+  strip(lastFrame()),
+);
 
 // And the warning lapses rather than leaving a live hair trigger.
 await sleep(2300);
-check('the exit confirmation times out', !strip(lastFrame()).includes('again to exit'),
-  strip(lastFrame()));
-
+check(
+  'the exit confirmation times out',
+  !strip(lastFrame()).includes('again to exit'),
+  strip(lastFrame()),
+);
 
 // --- shift+tab cycles the permission mode (card #19) ---
 stub.mode = 'default';
 stdin.write(SHIFT_TAB);
 await sleep(150);
 check('shift+tab moves to acceptEdits', stub.mode === 'acceptEdits', 'mode=' + stub.mode);
-check('the mode banner appears', strip(lastFrame()).includes('accept edits on'), strip(lastFrame()));
+check(
+  'the mode banner appears',
+  strip(lastFrame()).includes('accept edits on'),
+  strip(lastFrame()),
+);
 stdin.write(SHIFT_TAB);
 await sleep(150);
 check('shift+tab moves on to auto', stub.mode === 'auto', 'mode=' + stub.mode);
@@ -158,8 +169,11 @@ check('no banner in default mode', !strip(lastFrame()).includes('accept edits on
 // --- prompt history (card #37) ---
 stdin.write(UP);
 await sleep(150);
-check('up-arrow recalls an earlier prompt',
-  strip(lastFrame()).includes('do a thing'), strip(lastFrame()).slice(-300));
+check(
+  'up-arrow recalls an earlier prompt',
+  strip(lastFrame()).includes('do a thing'),
+  strip(lastFrame()).slice(-300),
+);
 stdin.write(CTRL_C);
 await sleep(150);
 
@@ -178,12 +192,18 @@ stub.run = async (_text: string, events: any) => {
 };
 await type(stdin, 'first');
 await sleep(200);
-check('the input line stays usable while working',
-  strip(lastFrame()).includes('working'), strip(lastFrame()).slice(-300));
+check(
+  'the input line stays usable while working',
+  strip(lastFrame()).includes('working'),
+  strip(lastFrame()).slice(-300),
+);
 await type(stdin, 'second');
 await sleep(200);
-check('a message typed mid-turn is queued, not lost',
-  strip(lastFrame()).includes('queued: second'), strip(lastFrame()).slice(-300));
+check(
+  'a message typed mid-turn is queued, not lost',
+  strip(lastFrame()).includes('queued: second'),
+  strip(lastFrame()).slice(-300),
+);
 
 stub.run = async (_text: string, events: any) => {
   events.onToolEnd({ id: 'c2', name: 'bash', input: { command: 'x' } }, 'ran second', false);
@@ -191,8 +211,11 @@ stub.run = async (_text: string, events: any) => {
 };
 release!();
 await sleep(500);
-check('the queued message runs once the turn ends',
-  strip(lastFrame()).includes('ran second'), strip(lastFrame()).slice(-400));
+check(
+  'the queued message runs once the turn ends',
+  strip(lastFrame()).includes('ran second'),
+  strip(lastFrame()).slice(-400),
+);
 
 // --- collapsible tool output (card #29) ---
 stub.run = async (_text: string, events: any) => {
@@ -202,13 +225,14 @@ stub.run = async (_text: string, events: any) => {
 };
 await type(stdin, 'big output');
 await sleep(400);
-check('long tool output is collapsed',
+check(
+  'long tool output is collapsed',
   strip(lastFrame()).includes('30 lines total') && !strip(lastFrame()).includes('line 29'),
-  strip(lastFrame()).slice(-400));
+  strip(lastFrame()).slice(-400),
+);
 stdin.write(String.fromCharCode(15)); // ctrl+o
 await sleep(250);
 check('ctrl+o expands it', strip(lastFrame()).includes('line 29'), strip(lastFrame()).slice(-500));
-
 
 // --- multi-line input via a trailing backslash (card #36) ---
 stub.run = async (_text: string, events: any) => {
@@ -219,60 +243,95 @@ stdin.write('first line\\');
 await sleep(80);
 stdin.write(CR);
 await sleep(120);
-check('a trailing backslash continues onto a new line',
-  !strip(lastFrame()).includes('saw:'), strip(lastFrame()).slice(-200));
+check(
+  'a trailing backslash continues onto a new line',
+  !strip(lastFrame()).includes('saw:'),
+  strip(lastFrame()).slice(-200),
+);
 stdin.write('second line');
 await sleep(80);
 stdin.write(CR);
 await sleep(300);
-check('the continued buffer submits as one multi-line message',
+check(
+  'the continued buffer submits as one multi-line message',
   strip(lastFrame()).includes('first line') && strip(lastFrame()).includes('second line'),
-  strip(lastFrame()).slice(-300));
+  strip(lastFrame()).slice(-300),
+);
 
 // --- reverse search (card #38) ---
 stdin.write(String.fromCharCode(18)); // ctrl+r
 await sleep(150);
-check('ctrl+r opens reverse search',
-  strip(lastFrame()).includes('reverse-i-search'), strip(lastFrame()).slice(-300));
+check(
+  'ctrl+r opens reverse search',
+  strip(lastFrame()).includes('reverse-i-search'),
+  strip(lastFrame()).slice(-300),
+);
 stdin.write('thing');
 await sleep(150);
-check('it finds a matching earlier prompt',
-  strip(lastFrame()).includes('do a thing'), strip(lastFrame()).slice(-300));
+check(
+  'it finds a matching earlier prompt',
+  strip(lastFrame()).includes('do a thing'),
+  strip(lastFrame()).slice(-300),
+);
 stdin.write(ESC);
 await sleep(150);
-check('esc leaves reverse search',
-  !strip(lastFrame()).includes('reverse-i-search'), strip(lastFrame()).slice(-200));
+check(
+  'esc leaves reverse search',
+  !strip(lastFrame()).includes('reverse-i-search'),
+  strip(lastFrame()).slice(-200),
+);
 
 // --- vim modal editing (card #49) ---
 await type(stdin, '/vim');
 await sleep(150);
-check('/vim reports it is on', strip(lastFrame()).includes('Vim keys on'), strip(lastFrame()).slice(-200));
-check('the mode indicator shows INSERT',
-  strip(lastFrame()).includes('-- INSERT --'), strip(lastFrame()).slice(-200));
+check(
+  '/vim reports it is on',
+  strip(lastFrame()).includes('Vim keys on'),
+  strip(lastFrame()).slice(-200),
+);
+check(
+  'the mode indicator shows INSERT',
+  strip(lastFrame()).includes('-- INSERT --'),
+  strip(lastFrame()).slice(-200),
+);
 stdin.write(ESC);
 await sleep(150);
-check('esc switches to normal mode',
-  strip(lastFrame()).includes('-- NORMAL --'), strip(lastFrame()).slice(-200));
+check(
+  'esc switches to normal mode',
+  strip(lastFrame()).includes('-- NORMAL --'),
+  strip(lastFrame()).slice(-200),
+);
 stdin.write('i');
 await sleep(120);
-check('i returns to insert mode',
-  strip(lastFrame()).includes('-- INSERT --'), strip(lastFrame()).slice(-200));
+check(
+  'i returns to insert mode',
+  strip(lastFrame()).includes('-- INSERT --'),
+  strip(lastFrame()).slice(-200),
+);
 await type(stdin, '/vim');
 await sleep(150);
 
 // --- /status and /doctor (card #50) ---
 await type(stdin, '/status');
-check('/status reports the model and mode',
+check(
+  '/status reports the model and mode',
   strip(lastFrame()).includes('model') && strip(lastFrame()).includes('gpt-4.1'),
-  strip(lastFrame()).slice(-400));
+  strip(lastFrame()).slice(-400),
+);
 await type(stdin, '/doctor');
-check('/doctor runs its checks',
+check(
+  '/doctor runs its checks',
   strip(lastFrame()).includes('node') && strip(lastFrame()).includes('workspace'),
-  strip(lastFrame()).slice(-400));
+  strip(lastFrame()).slice(-400),
+);
 
 // --- /theme (card #41) ---
 await type(stdin, '/theme mono');
-check('/theme switches', strip(lastFrame()).includes('Theme: mono'), strip(lastFrame()).slice(-200));
+check(
+  '/theme switches',
+  strip(lastFrame()).includes('Theme: mono'),
+  strip(lastFrame()).slice(-200),
+);
 await type(stdin, '/theme dark');
 
 console.log(failures.length ? '\n' + failures.length + ' FAILED' : '\nAll UI checks passed');

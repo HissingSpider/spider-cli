@@ -26,17 +26,25 @@ const base = { id, cwd: CWD, model: 'gpt-5', updatedAt: '' };
 console.log('\nappend');
 sessions.save({ ...base, turns: [user('one')] });
 const afterOne = fs.readFileSync(file, 'utf8');
-check('a header plus one turn is two lines',
-  afterOne.trim().split('\n').length === 2, JSON.stringify(afterOne));
+check(
+  'a header plus one turn is two lines',
+  afterOne.trim().split('\n').length === 2,
+  JSON.stringify(afterOne),
+);
 
 sessions.save({ ...base, turns: [user('one'), user('two')] });
 const afterTwo = fs.readFileSync(file, 'utf8');
-check('the second save appends one line',
-  afterTwo.trim().split('\n').length === 3, JSON.stringify(afterTwo));
+check(
+  'the second save appends one line',
+  afterTwo.trim().split('\n').length === 3,
+  JSON.stringify(afterTwo),
+);
 // The turn lines must be byte-identical: appending means not touching them.
-check('the existing turn line is untouched by the append',
+check(
+  'the existing turn line is untouched by the append',
   afterTwo.split('\n')[1] === afterOne.split('\n')[1],
-  afterOne.split('\n')[1] + ' vs ' + afterTwo.split('\n')[1]);
+  afterOne.split('\n')[1] + ' vs ' + afterTwo.split('\n')[1],
+);
 
 console.log('\nload');
 const loaded = sessions.byId(id, CWD)!;
@@ -53,15 +61,20 @@ check('allow rules round-trip', withMode.allow?.[0] === 'bash(ls:*)');
 console.log('\na crash mid-write does not lose the session');
 fs.appendFileSync(file, '{"role":"user","te');
 const survived = sessions.byId(id, CWD);
-check('a truncated final line is dropped, not fatal',
+check(
+  'a truncated final line is dropped, not fatal',
   survived !== null && survived.turns.length === 2,
-  JSON.stringify(survived?.turns.length));
+  JSON.stringify(survived?.turns.length),
+);
 
 console.log('\nlookup');
 check('a unique prefix resolves', sessions.byId(id.slice(0, 8), CWD)?.id === id);
 check('an unknown id returns null', sessions.byId('definitely-not-here', CWD) === null);
 check('mostRecent finds it', sessions.mostRecent(CWD)?.id === id);
-check('another cwd does not see it', sessions.list('/somewhere/else').every((s) => s.id !== id));
+check(
+  'another cwd does not see it',
+  sessions.list('/somewhere/else').every((s) => s.id !== id),
+);
 
 console.log('\nfork branches instead of overwriting');
 const forked = sessions.fork(id, CWD)!;
@@ -71,9 +84,11 @@ check('the original is untouched', sessions.byId(id, CWD)?.turns.length === 2);
 
 console.log('\nshrinking rewrites rather than appending');
 sessions.save({ ...base, turns: [user('fresh')] });
-check('a cleared transcript truncates the file',
+check(
+  'a cleared transcript truncates the file',
   sessions.byId(id, CWD)?.turns.length === 1,
-  String(sessions.byId(id, CWD)?.turns.length));
+  String(sessions.byId(id, CWD)?.turns.length),
+);
 
 console.log('\nexport');
 const md = sessions.toMarkdown(sessions.byId(id, CWD)!);

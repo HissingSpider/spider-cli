@@ -178,14 +178,22 @@ export async function startCallbackListener(): Promise<CallbackListener> {
       res.writeHead(status, { 'content-type': 'text/html' });
       res.end(
         '<html><body style="font-family:system-ui;padding:2rem">' +
-          '<h2>' + message + '</h2><p>You can close this tab and return to the terminal.</p>' +
+          '<h2>' +
+          message +
+          '</h2><p>You can close this tab and return to the terminal.</p>' +
           '</body></html>',
       );
     };
 
     received = { code, state, error };
-    finish(error || !code ? 400 : 200, error ? 'Authorization failed: ' + error
-      : !code ? 'No authorization code received' : 'Authorized');
+    finish(
+      error || !code ? 400 : 200,
+      error
+        ? 'Authorization failed: ' + error
+        : !code
+          ? 'No authorization code received'
+          : 'Authorized',
+    );
     notify?.();
   });
 
@@ -225,7 +233,8 @@ export async function startCallbackListener(): Promise<CallbackListener> {
 
 /** Open the authorization page, falling back to printing it. */
 export function openInBrowser(url: URL): void {
-  const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+  const cmd =
+    process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
   try {
     spawn(cmd, [url.toString()], { stdio: 'ignore', detached: true }).unref();
   } catch {

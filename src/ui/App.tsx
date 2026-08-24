@@ -94,11 +94,13 @@ function DiffPreview({ text }: { text: string }): React.ReactElement {
     <Box flexDirection="column">
       {text.split('\n').map((line, i) => {
         const t = theme();
-        const color =
-          line.startsWith('+') ? t.added
-          : line.startsWith('-') ? t.removed
-          : line.startsWith('@@') ? t.notice
-          : undefined;
+        const color = line.startsWith('+')
+          ? t.added
+          : line.startsWith('-')
+            ? t.removed
+            : line.startsWith('@@')
+              ? t.notice
+              : undefined;
         return (
           <Text key={i} color={color} dimColor={line.startsWith('@@')}>
             {line || ' '}
@@ -139,7 +141,11 @@ function ToolResult({
       ))}
       {hidden > 0 ? (
         <Text dimColor>
-          {'  ⎿ ' + allLines.length + ' lines total · ' + hidden + ' hidden' +
+          {'  ⎿ ' +
+            allLines.length +
+            ' lines total · ' +
+            hidden +
+            ' hidden' +
             (live ? ' (ctrl+o to expand)' : '')}
         </Text>
       ) : null}
@@ -222,7 +228,9 @@ function SlashHints({
   commands: CustomCommand[];
 }): React.ReactElement | null {
   const lines = [
-    ...HELP.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('/')),
+    ...HELP.split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith('/')),
     ...commands.map((c) => '/' + c.name.padEnd(14) + c.description),
   ];
   const nameOf = (l: string) => l.split(/\s+/)[0];
@@ -573,10 +581,13 @@ export function App({
     (input, key) => {
       if (!pendingPlan) return;
       const answer: PlanAnswer | null =
-        input === '1' || key.return ? 'acceptEdits'
-        : input === '2' ? 'default'
-        : input === '3' || key.escape ? 'reject'
-        : null;
+        input === '1' || key.return
+          ? 'acceptEdits'
+          : input === '2'
+            ? 'default'
+            : input === '3' || key.escape
+              ? 'reject'
+              : null;
       if (!answer) return;
       const { resolve } = pendingPlan;
       setPendingPlan(null);
@@ -591,10 +602,13 @@ export function App({
     (input, key) => {
       if (!pending) return;
       const answer: PermissionAnswer | null =
-        input === '1' || key.return ? 'allow'
-        : input === '2' ? 'allow-always'
-        : input === '3' || key.escape ? 'deny'
-        : null;
+        input === '1' || key.return
+          ? 'allow'
+          : input === '2'
+            ? 'allow-always'
+            : input === '3' || key.escape
+              ? 'deny'
+              : null;
       if (!answer) return;
       const { resolve } = pending;
       setPending(null);
@@ -612,41 +626,50 @@ export function App({
       abortRef.current = controller;
       let buffer = '';
       try {
-        await agent.run(text, {
-          onDelta: (d) => {
-            buffer += d;
-            // Reasoning belongs to the step that produced it; once the answer
-            // starts, keeping it on screen just crowds the answer out.
-            setReasoning('');
-            setStream(buffer);
+        await agent.run(
+          text,
+          {
+            onDelta: (d) => {
+              buffer += d;
+              // Reasoning belongs to the step that produced it; once the answer
+              // starts, keeping it on screen just crowds the answer out.
+              setReasoning('');
+              setStream(buffer);
+            },
+            onReasoning: (d) => setReasoning((r) => (r + d).slice(-600)),
+            onAssistantEnd: () => {
+              if (buffer.trim()) push({ kind: 'assistant', text: buffer.trim() });
+              buffer = '';
+              setStream('');
+            },
+            onToolStart: (_call, preview) => setToolLine(preview),
+            onToolEnd: (_call, output, isError) => {
+              setToolLine(null);
+              push({
+                kind: 'tool',
+                label: describe(_call),
+                output: output.split('\n').slice(0, 4).join('\n'),
+                full: output,
+                isError,
+              });
+            },
+            onNotice: (t) => push({ kind: 'notice', text: t }),
+            requestPermission: (call, rule, preview) =>
+              new Promise<PermissionAnswer>((resolve) =>
+                setPending({ call, rule, preview, resolve }),
+              ),
+            requestPlanApproval: (plan) =>
+              new Promise<PlanAnswer>((resolve) => setPendingPlan({ plan, resolve })),
           },
-          onReasoning: (d) => setReasoning((r) => (r + d).slice(-600)),
-          onAssistantEnd: () => {
-            if (buffer.trim()) push({ kind: 'assistant', text: buffer.trim() });
-            buffer = '';
-            setStream('');
-          },
-          onToolStart: (_call, preview) => setToolLine(preview),
-          onToolEnd: (_call, output, isError) => {
-            setToolLine(null);
-            push({
-              kind: 'tool',
-              label: describe(_call),
-              output: output.split('\n').slice(0, 4).join('\n'),
-              full: output,
-              isError,
-            });
-          },
-          onNotice: (t) => push({ kind: 'notice', text: t }),
-          requestPermission: (call, rule, preview) =>
-            new Promise<PermissionAnswer>((resolve) =>
-              setPending({ call, rule, preview, resolve }),
-            ),
-          requestPlanApproval: (plan) =>
-            new Promise<PlanAnswer>((resolve) => setPendingPlan({ plan, resolve })),
-        }, controller.signal, images);
+          controller.signal,
+          images,
+        );
       } catch (err: any) {
-        if (err instanceof InterruptedError || err?.name === 'AbortError' || controller.signal.aborted) {
+        if (
+          err instanceof InterruptedError ||
+          err?.name === 'AbortError' ||
+          controller.signal.aborted
+        ) {
           if (buffer.trim()) push({ kind: 'assistant', text: buffer.trim() });
           push({ kind: 'notice', text: 'Interrupted.' });
         } else {
@@ -715,10 +738,19 @@ export function App({
         void agent.tools.bash
           .run({ command }, cwd)
           .then((r) => {
-            push({ kind: 'tool', label: '$ ' + command, output: r.output, full: r.output, isError: r.isError });
+            push({
+              kind: 'tool',
+              label: '$ ' + command,
+              output: r.output,
+              full: r.output,
+              isError: r.isError,
+            });
             // The model must know this happened, or its picture of the
             // workspace silently diverges from reality.
-            agent.turns.push({ role: 'user', text: '[ran directly] $ ' + command + '\n' + r.output });
+            agent.turns.push({
+              role: 'user',
+              text: '[ran directly] $ ' + command + '\n' + r.output,
+            });
           })
           .catch((e: any) => push({ kind: 'error', text: e?.message ?? String(e) }))
           .finally(() => setBusy(false));
@@ -776,7 +808,10 @@ export function App({
             push({
               kind: 'notice',
               text:
-                agent.turns.length + ' turns, about ' + used.toLocaleString() + ' input tokens' +
+                agent.turns.length +
+                ' turns, about ' +
+                used.toLocaleString() +
+                ' input tokens' +
                 (limit > 0
                   ? ' (auto-compacts above ' + limit.toLocaleString() + ')'
                   : ' (auto-compaction disabled)'),
@@ -793,13 +828,18 @@ export function App({
             }
             const lines = mcpStatus.map((s) => {
               const mark =
-                s.state === 'connected' ? '●'
-                : s.state === 'reconnecting' ? '◐'
-                : s.state === 'disabled' ? '○'
-                : '✗';
+                s.state === 'connected'
+                  ? '●'
+                  : s.state === 'reconnecting'
+                    ? '◐'
+                    : s.state === 'disabled'
+                      ? '○'
+                      : '✗';
               if (s.state === 'disabled') return mark + ' ' + s.name + ' — disabled';
               if (!s.ok) {
-                const tail = s.stderr.length ? '\n    stderr: ' + s.stderr.slice(-3).join('\n            ') : '';
+                const tail = s.stderr.length
+                  ? '\n    stderr: ' + s.stderr.slice(-3).join('\n            ')
+                  : '';
                 return mark + ' ' + s.name + ' — ' + (s.error ?? 'failed') + tail;
               }
               const bits = [s.toolCount + ' tools'];
@@ -834,8 +874,13 @@ export function App({
                 ? all
                     .map(
                       (p) =>
-                        '  /mcp__' + p.server + '__' + p.name +
-                        p.arguments.map((a) => ' <' + a.name + (a.required ? '' : '?') + '>').join('') +
+                        '  /mcp__' +
+                        p.server +
+                        '__' +
+                        p.name +
+                        p.arguments
+                          .map((a) => ' <' + a.name + (a.required ? '' : '?') + '>')
+                          .join('') +
                         (p.description ? '\n      ' + p.description : ''),
                     )
                     .join('\n')
@@ -861,9 +906,12 @@ export function App({
             push({
               kind: 'notice',
               text:
-                'Mode: ' + agent.mode +
-                '\nallow: ' + (agent.settings.allow.join(', ') || '(none)') +
-                '\ndeny:  ' + (agent.settings.deny.join(', ') || '(none)'),
+                'Mode: ' +
+                agent.mode +
+                '\nallow: ' +
+                (agent.settings.allow.join(', ') || '(none)') +
+                '\ndeny:  ' +
+                (agent.settings.deny.join(', ') || '(none)'),
             });
             return;
           case '/model':
@@ -884,7 +932,10 @@ export function App({
             return;
           case '/mode':
             if (!MODES.includes(arg as PermissionMode)) {
-              push({ kind: 'notice', text: 'Modes: ' + MODES.join(', ') + '\nCurrent: ' + agent.mode });
+              push({
+                kind: 'notice',
+                text: 'Modes: ' + MODES.join(', ') + '\nCurrent: ' + agent.mode,
+              });
               return;
             }
             agent.mode = arg as PermissionMode;
@@ -900,7 +951,11 @@ export function App({
                   all
                     .map(
                       (x) =>
-                        '  ' + x.id + '  ' + String(x.turns.length).padStart(3) + ' turns  ' +
+                        '  ' +
+                        x.id +
+                        '  ' +
+                        String(x.turns.length).padStart(3) +
+                        ' turns  ' +
                         (x.title ?? '(untitled)'),
                     )
                     .join('\n')
@@ -946,13 +1001,17 @@ export function App({
             agent.turns = result.turns;
             const parts = ['Rewound to checkpoint ' + id + '.'];
             if (result.restored.length) {
-              parts.push('Reverted: ' + result.restored.map((f) => path.relative(cwd, f)).join(', '));
+              parts.push(
+                'Reverted: ' + result.restored.map((f) => path.relative(cwd, f)).join(', '),
+              );
             }
             if (result.removed.length) {
               parts.push('Deleted: ' + result.removed.map((f) => path.relative(cwd, f)).join(', '));
             }
             if (result.failed.length) {
-              parts.push('COULD NOT restore: ' + result.failed.map((f) => path.relative(cwd, f)).join(', '));
+              parts.push(
+                'COULD NOT restore: ' + result.failed.map((f) => path.relative(cwd, f)).join(', '),
+              );
             }
             if (!result.restored.length && !result.removed.length) {
               parts.push('No file changes to undo.');
@@ -995,10 +1054,14 @@ export function App({
             const prompt =
               'Write a SPIDER.md for this project. Explore the codebase first: read the ' +
               'README, package manifests, config and a representative sample of the source. ' +
-              'Then write ' + file + ' covering how to build, test and run it, the layout, ' +
+              'Then write ' +
+              file +
+              ' covering how to build, test and run it, the layout, ' +
               'the conventions a newcomer would otherwise get wrong, and anything non-obvious ' +
               'about the architecture. Be concise and concrete — no filler, no restating what ' +
-              'the code already makes obvious. If a ' + file + ' already exists, improve it ' +
+              'the code already makes obvious. If a ' +
+              file +
+              ' already exists, improve it ' +
               'rather than replacing it wholesale.';
             push({ kind: 'user', text: prompt });
             void runAgent(prompt);
@@ -1006,7 +1069,10 @@ export function App({
           }
           case '/vim':
             setVim((v) => {
-              push({ kind: 'notice', text: 'Vim keys ' + (!v ? 'on — esc for normal mode' : 'off') });
+              push({
+                kind: 'notice',
+                text: 'Vim keys ' + (!v ? 'on — esc for normal mode' : 'off'),
+              });
               return !v;
             });
             return;
@@ -1015,7 +1081,9 @@ export function App({
             if (!['dark', 'light', 'mono'].includes(wanted)) {
               push({
                 kind: 'notice',
-                text: 'Themes: dark, light, mono. Current: ' + themeName +
+                text:
+                  'Themes: dark, light, mono. Current: ' +
+                  themeName +
                   '\nSet SPIDER_THEME, or NO_COLOR=1 for no colour at all.',
               });
               return;
@@ -1051,12 +1119,30 @@ export function App({
               checks.push((good ? '● ' : '✗ ') + label.padEnd(22) + detail);
 
             ok('node', Number(process.versions.node.split('.')[0]) >= 20, process.versions.node);
-            ok('workspace', cwd !== homedir(), cwd === homedir() ? 'running in $HOME — cd into a project' : cwd);
-            ok('project instructions', !!agent.settings, existsSync(cwd + '/SPIDER.md') ? 'SPIDER.md found' : 'no SPIDER.md (/init writes one)');
+            ok(
+              'workspace',
+              cwd !== homedir(),
+              cwd === homedir() ? 'running in $HOME — cd into a project' : cwd,
+            );
+            ok(
+              'project instructions',
+              !!agent.settings,
+              existsSync(cwd + '/SPIDER.md')
+                ? 'SPIDER.md found'
+                : 'no SPIDER.md (/init writes one)',
+            );
             ok('deny rules', true, agent.settings.deny.length + ' configured');
             ok('allow rules', true, agent.settings.allow.length + ' configured');
-            ok('search', !!agent.settings.search, agent.settings.search ? 'configured' : 'not configured — web_search unavailable');
-            ok('hooks', true, Object.keys(agent.settings.hooks ?? {}).length + ' event(s) with hooks');
+            ok(
+              'search',
+              !!agent.settings.search,
+              agent.settings.search ? 'configured' : 'not configured — web_search unavailable',
+            );
+            ok(
+              'hooks',
+              true,
+              Object.keys(agent.settings.hooks ?? {}).length + ' event(s) with hooks',
+            );
             for (const m of mcpStatus) {
               ok('mcp: ' + m.name, m.ok, m.ok ? m.toolCount + ' tools' : (m.error ?? m.state));
             }
@@ -1123,7 +1209,24 @@ export function App({
       for (const note of resolved.notes) push({ kind: 'notice', text: note });
       void runAgent(resolved.text, resolved.images);
     },
-    [agent, busy, commands, cwd, exit, flush, history, mcp, mcpStatus, pending, pendingElicit, pendingPlan, push, runAgent, themeName, sessionId],
+    [
+      agent,
+      busy,
+      commands,
+      cwd,
+      exit,
+      flush,
+      history,
+      mcp,
+      mcpStatus,
+      pending,
+      pendingElicit,
+      pendingPlan,
+      push,
+      runAgent,
+      themeName,
+      sessionId,
+    ],
   );
 
   return (
@@ -1135,7 +1238,11 @@ export function App({
       {reasoning && !stream ? (
         <Box marginBottom={1} flexDirection="column">
           <Text dimColor italic>
-            {reasoning.split('\n').slice(-4).map((l) => '  ' + l).join('\n')}
+            {reasoning
+              .split('\n')
+              .slice(-4)
+              .map((l) => '  ' + l)
+              .join('\n')}
           </Text>
         </Box>
       ) : null}
@@ -1196,7 +1303,7 @@ export function App({
           <DiffPreview text={pending.preview} />
           <Box marginTop={1} flexDirection="column">
             <Text>[1] Yes (enter)</Text>
-            <Text>{'[2] Yes, and don\'t ask again for ' + pending.rule}</Text>
+            <Text>{"[2] Yes, and don't ask again for " + pending.rule}</Text>
             <Text>[3] No (esc)</Text>
           </Box>
         </Box>
@@ -1208,7 +1315,9 @@ export function App({
                 <Spinner type="dots" />
               </Text>
               <Text dimColor>
-                {' working… (' + elapsed + 's · ' +
+                {' working… (' +
+                  elapsed +
+                  's · ' +
                   (agent.cost.input + agent.cost.output).toLocaleString() +
                   ' tokens · esc to interrupt)'}
               </Text>

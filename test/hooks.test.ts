@@ -18,13 +18,22 @@ function check(name: string, cond: boolean, detail?: string) {
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spider-hooks-'));
 const settings = (hooks: any): Settings => ({
-  model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
-  autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {}, hooks,
+  model: 'gpt-5',
+  permissionMode: 'default',
+  allow: [],
+  deny: [],
+  maxTokens: 8192,
+  autoCompactAt: 100000,
+  keepRecentTurns: 6,
+  mcpServers: {},
+  hooks,
 });
 
 // A hook that records what it was handed, so we can check the payload arrives.
 const recorder = path.join(dir, 'record.sh');
-fs.writeFileSync(recorder, '#!/bin/sh\ncat > "' + dir + '/payload.json"\nexit 0\n', { mode: 0o755 });
+fs.writeFileSync(recorder, '#!/bin/sh\ncat > "' + dir + '/payload.json"\nexit 0\n', {
+  mode: 0o755,
+});
 
 console.log('\npayload');
 await runHooks(
@@ -134,9 +143,11 @@ await runHooks(
   { tool_name: 'bash' },
   dir,
 );
-check('hooks run in order, not concurrently',
+check(
+  'hooks run in order, not concurrently',
   fs.readFileSync(order, 'utf8').trim().split('\n').join(',') === 'one,two',
-  fs.readFileSync(order, 'utf8'));
+  fs.readFileSync(order, 'utf8'),
+);
 
 console.log('\nno hooks configured');
 const none = await runHooks('Stop', settings({}), {}, dir);

@@ -17,8 +17,14 @@ function check(name: string, cond: boolean, detail?: string) {
 }
 
 const base: Settings = {
-  model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
-  autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  model: 'gpt-5',
+  permissionMode: 'default',
+  allow: [],
+  deny: [],
+  maxTokens: 8192,
+  autoCompactAt: 100000,
+  keepRecentTurns: 6,
+  mcpServers: {},
   hooks: {},
 };
 const call = (todos: unknown): ToolCall => ({ id: 't', name: 'todo_write', input: { todos } });
@@ -26,7 +32,12 @@ const call = (todos: unknown): ToolCall => ({ id: 't', name: 'todo_write', input
 clearTodos();
 
 const ok = await todoTool.run(
-  { todos: [{ content: 'read the code', status: 'in_progress' }, { content: 'fix it', status: 'pending' }] },
+  {
+    todos: [
+      { content: 'read the code', status: 'in_progress' },
+      { content: 'fix it', status: 'pending' },
+    ],
+  },
   '/tmp',
 );
 check('a valid list is accepted', !ok.isError, ok.output);
@@ -34,7 +45,12 @@ check('the list is readable by the UI', getTodos().length === 2);
 check('status round-trips', getTodos()[0].status === 'in_progress');
 
 const two = await todoTool.run(
-  { todos: [{ content: 'a', status: 'in_progress' }, { content: 'b', status: 'in_progress' }] },
+  {
+    todos: [
+      { content: 'a', status: 'in_progress' },
+      { content: 'b', status: 'in_progress' },
+    ],
+  },
   '/tmp',
 );
 check('two in_progress items are refused', two.isError, two.output);
@@ -50,10 +66,8 @@ const notArray = await todoTool.run({ todos: 'nope' }, '/tmp');
 check('a non-array is refused', notArray.isError, notArray.output);
 
 console.log('');
-check('todo_write never prompts',
-  decide(call([]), base, 'default', '/tmp').kind === 'allow');
-check('todo_write works while planning',
-  decide(call([]), base, 'plan', '/tmp').kind === 'allow');
+check('todo_write never prompts', decide(call([]), base, 'default', '/tmp').kind === 'allow');
+check('todo_write works while planning', decide(call([]), base, 'plan', '/tmp').kind === 'allow');
 
 clearTodos();
 check('clearing works', getTodos().length === 0);
