@@ -29,7 +29,7 @@ export async function postJSON(
   headers: Record<string, string>,
   body: unknown,
   signal?: AbortSignal,
-): Promise<any> {
+): Promise<unknown> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {

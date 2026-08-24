@@ -490,7 +490,7 @@ const READ_TOOLS = new Set([
 export function describe(call: ToolCall): string {
   // Tools legitimately take no arguments — several MCP tools do — so this must
   // not assume `input` is present.
-  const i = (call.input ?? {}) as Record<string, any>;
+  const i = (call.input ?? {}) as Record<string, unknown>;
   switch (call.name) {
     case 'bash':
       return '$ ' + (i.command ?? '');

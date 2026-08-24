@@ -92,7 +92,7 @@ function resolveIn(cwd: string, p: string): string {
 }
 
 /** Apply an `edit_file` call in memory so the diff shows what would land. */
-function projectedEdit(current: string, input: Record<string, any>): string | null {
+function projectedEdit(current: string, input: Record<string, unknown>): string | null {
   const oldStr = String(input.old_string ?? '');
   const newStr = String(input.new_string ?? '');
   if (!oldStr || !current.includes(oldStr)) return null;
@@ -137,7 +137,7 @@ export function editDiff(call: ToolCall, cwd: string): string[] | null {
 
   if (call.name === 'edit_file') {
     if (!exists) return null;
-    const next = projectedEdit(current, call.input as Record<string, any>);
+    const next = projectedEdit(current, call.input as Record<string, unknown>);
     if (next === null) return null;
     return unifiedDiff(current, next);
   }

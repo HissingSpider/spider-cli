@@ -72,7 +72,7 @@ export type ToolResult = { output: string; isError: boolean };
 export type ToolImpl = {
   spec: ToolSpec;
   /** `events` is passed so composite tools (task) can narrate and request approval. */
-  run: (input: Record<string, any>, cwd: string, events?: AgentEvents) => Promise<ToolResult>;
+  run: (input: Record<string, unknown>, cwd: string, events?: AgentEvents) => Promise<ToolResult>;
 };
 
 function truncate(s: string): string {
@@ -83,6 +83,15 @@ function truncate(s: string): string {
 
 const ok = (output: string): ToolResult => ({ output: truncate(output), isError: false });
 const fail = (output: string): ToolResult => ({ output: truncate(output), isError: true });
+
+/**
+ * Tool inputs are model-supplied JSON. The schema asks for a string, but the
+ * model can send anything, and passing a number straight to fs produces a
+ * confusing failure deep inside node rather than a usable tool error.
+ */
+function str(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : value == null ? fallback : String(value);
+}
 
 function resolve(cwd: string, p: string): string {
   const expanded = expandHome(p);
@@ -236,7 +245,7 @@ export const TOOLS: Record<string, ToolImpl> = {
       },
     },
     async run(input, cwd) {
-      const file = resolve(cwd, input.path);
+      const file = resolve(cwd, str(input.path));
       // Overwriting a file nobody looked at destroys whatever was there.
       if (fs.existsSync(file) && !hasRead(file)) {
         return fail(
@@ -246,7 +255,7 @@ export const TOOLS: Record<string, ToolImpl> = {
         );
       }
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, input.content);
+      fs.writeFileSync(file, str(input.content));
       markRead(file);
       const n = String(input.content).split('\n').length;
       return ok('Wrote ' + n + ' line' + (n === 1 ? '' : 's') + ' to ' + input.path);
@@ -271,7 +280,7 @@ export const TOOLS: Record<string, ToolImpl> = {
       },
     },
     async run(input, cwd) {
-      const file = resolve(cwd, input.path);
+      const file = resolve(cwd, str(input.path));
       if (!fs.existsSync(file)) return fail('File not found: ' + input.path);
       if (!hasRead(file)) {
         return fail(
@@ -281,7 +290,7 @@ export const TOOLS: Record<string, ToolImpl> = {
         );
       }
       const before = fs.readFileSync(file, 'utf8');
-      const count = before.split(input.old_string).length - 1;
+      const count = before.split(str(input.old_string)).length - 1;
       if (count === 0) return fail('old_string not found in ' + input.path);
       if (count > 1 && !input.replace_all) {
         return fail(
@@ -293,8 +302,8 @@ export const TOOLS: Record<string, ToolImpl> = {
         );
       }
       const after = input.replace_all
-        ? before.split(input.old_string).join(input.new_string)
-        : before.replace(input.old_string, input.new_string);
+        ? before.split(str(input.old_string)).join(str(input.new_string))
+        : before.replace(str(input.old_string), str(input.new_string));
       fs.writeFileSync(file, after);
       markRead(file);
       return ok('Replaced ' + (input.replace_all ? count : 1) + ' occurrence(s) in ' + input.path);
@@ -421,7 +430,7 @@ export const TOOLS: Record<string, ToolImpl> = {
       },
     },
     async run(input, cwd) {
-      const re = globToRegExp(input.pattern);
+      const re = globToRegExp(str(input.pattern));
       const hits = [...walk(cwd, cwd)].filter((f) => re.test(f)).slice(0, 500);
       return ok(hits.length ? hits.join('\n') : 'No files match ' + input.pattern);
     },
@@ -444,11 +453,11 @@ export const TOOLS: Record<string, ToolImpl> = {
     async run(input, cwd) {
       let re: RegExp;
       try {
-        re = new RegExp(input.pattern);
+        re = new RegExp(str(input.pattern));
       } catch (e) {
         return fail('Invalid regex: ' + errorMessage(e));
       }
-      const filter = input.glob ? globToRegExp(input.glob) : null;
+      const filter = input.glob ? globToRegExp(str(input.glob)) : null;
       const hits: string[] = [];
       for (const rel of walk(cwd, cwd)) {
         if (filter && !filter.test(rel)) continue;
@@ -483,7 +492,7 @@ export const TOOLS: Record<string, ToolImpl> = {
       },
     },
     async run(input, cwd) {
-      const dir = resolve(cwd, input.path || '.');
+      const dir = resolve(cwd, str(input.path, '.') || '.');
       if (!fs.existsSync(dir)) return fail('Not found: ' + input.path);
       const entries = fs
         .readdirSync(dir, { withFileTypes: true })

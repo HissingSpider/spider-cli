@@ -134,7 +134,7 @@ await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port;
 
 // --- postJSON --------------------------------------------------------------
-const ok = await postJSON(base + '/ok', {}, {});
+const ok = (await postJSON(base + '/ok', {}, {})) as { id: string };
 check('a good response parses', ok.id === 'resp_1');
 
 const err200 = await threw(() => postJSON(base + '/error-200', {}, {}));
@@ -151,7 +151,7 @@ check(
   String(html),
 );
 
-const retried = await postJSON(base + '/flaky', {}, {});
+const retried = (await postJSON(base + '/flaky', {}, {})) as { id: string; attempts: number };
 check(
   'a 503 is retried until it succeeds',
   retried.id === 'resp_after_retry',

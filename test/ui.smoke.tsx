@@ -1,12 +1,11 @@
-import React from 'react';
 import { render } from 'ink-testing-library';
 import { App } from '../src/ui/App.tsx';
 import { CheckpointStore } from '../src/checkpoint.ts';
-import type { Agent } from '../src/agent/loop.ts';
-import type { AgentEvents } from '../src/agent/loop.ts';
+import type { Agent, AgentEvents } from '../src/agent/loop.ts';
 
-// biome-ignore lint/suspicious/noExplicitAny: a deliberate partial double of
-// Agent — typing every member would restate the class without testing anything.
+// A deliberate partial double of Agent: typing every member would restate the
+// class without testing anything.
+// biome-ignore lint/suspicious/noExplicitAny: hand-rolled partial test double
 const stub: any = {
   lastSignal: undefined as AbortSignal | undefined,
   model: 'gpt-5',
