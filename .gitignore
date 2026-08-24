@@ -1,0 +1,18 @@
+node_modules/
+dist/
+
+# Credentials and local state. Keys live in ~/.spidercli/.env, but a project
+# .env is also read, so it must never be committed.
+.env
+.env.*
+.spider/
+
+# Editor and OS noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Scratch
+*.log
+.rewind-drive.tsx

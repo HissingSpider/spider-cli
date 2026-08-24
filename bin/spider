@@ -1,0 +1,36 @@
+#!/bin/zsh
+# Launcher for spider-cli.
+#
+# node reaches the PATH only through nvm, which is loaded by an interactive
+# ~/.zshrc. Anything else -- a cron job, a login shell, another tool shelling
+# out -- has no node at all, so resolve it here rather than relying on the
+# shebang finding one.
+
+ROOT="${0:A:h:h}"
+
+if ! command -v node >/dev/null 2>&1; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh" >/dev/null 2>&1
+  fi
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  # Last resort: newest node nvm has installed.
+  NEWEST=$(ls -d "$HOME"/.nvm/versions/node/*/bin/node 2>/dev/null | sort -V | tail -1)
+  if [ -n "$NEWEST" ]; then
+    NODE="$NEWEST"
+  else
+    print -u2 "spider: no node found. Install node, or run: nvm install 22"
+    exit 1
+  fi
+else
+  NODE=$(command -v node)
+fi
+
+# MCP servers are spawned as child processes and are usually node or npx
+# themselves, so node's directory has to be on PATH for them, not just resolved
+# for this process.
+export PATH="${NODE:h}:$PATH"
+
+exec "$NODE" "$ROOT/node_modules/tsx/dist/cli.mjs" "$ROOT/src/index.tsx" "$@"
