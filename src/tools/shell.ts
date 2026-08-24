@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { accessSync, constants as fsConstants } from 'node:fs';
 import type { Readable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 
@@ -14,6 +15,44 @@ import { randomUUID } from 'node:crypto';
  * carrying the exit status, because a shell gives no other in-band signal that
  * a command has finished.
  */
+
+/**
+ * Which shell to spawn. zsh is the macOS default and was hardcoded here, which
+ * meant every command failed with ENOENT on a machine without it — most Linux
+ * boxes, containers, and CI runners. Resolved once at load: an explicit
+ * override, then the user's login shell, then the usual suspects.
+ *
+ * `-f` (skip startup files) is only passed to shells that understand it; sh
+ * does not, and would treat it as an option error.
+ */
+function resolveShell(): { path: string; args: string[] } {
+  const candidates = [
+    process.env.SPIDER_SHELL,
+    process.env.SHELL,
+    '/bin/zsh',
+    '/bin/bash',
+    '/bin/sh',
+  ].filter((c): c is string => Boolean(c));
+
+  for (const candidate of candidates) {
+    try {
+      accessSync(candidate, fsConstants.X_OK);
+      const name = candidate.split('/').pop() ?? '';
+      // zsh -f and bash --noprofile --norc both skip user startup files, which
+      // keeps a stray alias or prompt hook out of the agent's command output.
+      const args =
+        name === 'zsh' ? ['-f']
+        : name === 'bash' ? ['--noprofile', '--norc']
+        : [];
+      return { path: candidate, args };
+    } catch {
+      /* not executable or not present; try the next */
+    }
+  }
+  return { path: '/bin/sh', args: [] };
+}
+
+export const SHELL = resolveShell();
 
 const SENTINEL = '__SPIDER_DONE__';
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -33,7 +72,7 @@ class PersistentShell {
   constructor(private readonly cwd: string) {}
 
   private start(): ChildProcessWithoutNullStreams {
-    const proc = spawn('/bin/zsh', ['-f'], {
+    const proc = spawn(SHELL.path, SHELL.args, {
       cwd: this.cwd,
       env: { ...process.env },
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -205,7 +244,7 @@ let nextJobId = 1;
  * the same as letting it run.
  */
 export function startBackground(command: string, cwd: string): BackgroundJob {
-  const proc = spawn('/bin/zsh', ['-f', '-c', command], {
+  const proc = spawn(SHELL.path, [...SHELL.args, '-c', command], {
     cwd,
     env: { ...process.env },
     stdio: ['ignore', 'pipe', 'pipe'],
