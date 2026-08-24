@@ -16,7 +16,13 @@ import {
 } from './config.ts';
 import os from 'node:os';
 import * as sessions from './session.ts';
-import { connectServers, isHttpConfig, type McpConnection, type McpStatus } from './mcp/client.ts';
+import {
+  connectServers,
+  isHttpConfig,
+  type McpConnection,
+  type McpServerConfig,
+  type McpStatus,
+} from './mcp/client.ts';
 import { createResourceTools } from './tools/mcp-resources.ts';
 import { loginToServer } from './mcp/login.ts';
 import { forgetServer, hasStoredTokens } from './mcp/oauth.ts';
@@ -37,6 +43,7 @@ import { notice } from './ui/notices.ts';
 import { runHooks } from './agent/hooks.ts';
 import { elicit } from './ui/elicit.ts';
 import { errorMessage } from './errors.ts';
+import { killAllJobs, resetShells } from './tools/shell.ts';
 
 type Args = {
   prompt?: string;
@@ -180,7 +187,7 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
       console.error('       spider mcp add <name> --url <https://...> [--scope "a b"]');
       return;
     }
-    let cfg: Record<string, unknown>;
+    let cfg: McpServerConfig;
     if (rest[0] === '--url') {
       const url = rest[1];
       if (!url) return void console.error('--url needs a value');
@@ -190,7 +197,7 @@ async function mcpCommand(argv: string[], cwd: string): Promise<void> {
       cfg = { command: rest[0], ...(rest.length > 1 ? { args: rest.slice(1) } : {}) };
     }
     const file = addMcpServer(cwd, name, cfg);
-    trust(name, cfg as any);
+    trust(name, cfg);
     console.log('Added "' + name + '" to ' + file + ' and trusted it.');
     return;
   }
@@ -293,6 +300,17 @@ function printBanner(
   for (const line of body) console.log('│' + line.padEnd(width) + '│');
   console.log('╰' + '─'.repeat(width) + '╯');
   console.log('  /help for commands · shift+tab cycles permission mode · ctrl+o expands output\n');
+}
+
+/**
+ * Release every child process the run may have started. The persistent shell
+ * and background jobs keep the event loop alive, so without this a headless
+ * run that called bash never exits — it just sits there after printing.
+ */
+async function shutdown(mcp: McpConnection): Promise<void> {
+  killAllJobs();
+  resetShells();
+  await mcp.close();
 }
 
 async function main() {
@@ -403,7 +421,11 @@ async function main() {
       console.error('MCP server "' + s.name + '" failed: ' + s.error);
     }
   }
-  process.on('exit', () => void mcp.close());
+  process.on('exit', () => {
+    killAllJobs();
+    resetShells();
+    void mcp.close();
+  });
 
   agent = new Agent(
     cwd,
@@ -531,7 +553,7 @@ async function main() {
         process.stderr.write('\n' + agent.cost.summary() + '\n');
       }
 
-      await mcp.close();
+      await shutdown(mcp);
       // A refused approval means the task did not actually complete; a script
       // needs to be able to tell that from success.
       if (refusals > 0) process.exitCode = 2;
@@ -539,7 +561,7 @@ async function main() {
       const message = errorMessage(err);
       if (json || streamJson) emit({ type: 'error', error: message });
       else console.error('\nError: ' + message);
-      await mcp.close();
+      await shutdown(mcp);
       process.exit(1);
     }
     return;

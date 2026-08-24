@@ -47,3 +47,18 @@ export function isAbortError(error: unknown): boolean {
   if (hasKey(error, 'name') && error.name === 'AbortError') return true;
   return errorCode(error) === 'ABORT_ERR';
 }
+
+/** Narrowing helpers for values read off untyped stream payloads. */
+export function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+export function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
+export function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}

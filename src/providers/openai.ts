@@ -1,6 +1,7 @@
 import { postSSE } from './http.ts';
 import type { AssistantResult, Provider, StreamOpts, ToolCall, Turn } from './types.ts';
 import { SpiderAIError } from './types.ts';
+import { asNumber, asRecord, asString } from '../errors.ts';
 
 /** Models confirmed reachable on a SpiderAI student key. There is no /v1/models to query. */
 export const OPENAI_MODELS = ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'];
@@ -80,35 +81,47 @@ export function createOpenAIProvider(baseUrl: string, apiKey: string): Provider 
             opts.onReasoning?.('\n');
             break;
           case 'response.output_text.delta':
-            if (typeof data.delta === 'string') {
-              text += data.delta;
-              opts.onDelta(data.delta);
+            {
+              const chunk = asString(data.delta);
+              if (chunk) {
+                text += chunk;
+                opts.onDelta(chunk);
+              }
             }
             break;
           case 'response.failed':
-          case 'error':
+          case 'error': {
+            const failure = asRecord(asRecord(data.response)?.error);
             throw new SpiderAIError(
-              data.response?.error?.message ?? data.message ?? 'Response failed',
+              asString(failure?.message) ?? asString(data.message) ?? 'Response failed',
             );
+          }
           case 'response.completed':
           case 'response.incomplete': {
-            const r = data.response ?? {};
-            for (const item of r.output ?? []) {
-              if (item.type === 'function_call') {
+            const response = asRecord(data.response) ?? {};
+            const output = Array.isArray(response.output) ? response.output : [];
+            for (const rawItem of output) {
+              const item = asRecord(rawItem);
+              if (item?.type === 'function_call') {
                 let input: Record<string, unknown> = {};
                 try {
-                  input = JSON.parse(item.arguments || '{}');
+                  input = JSON.parse(asString(item.arguments) || '{}');
                 } catch {
                   /* malformed arguments surface as an empty input */
                 }
-                toolCalls.push({ id: item.call_id, name: item.name, input });
+                toolCalls.push({
+                  id: String(item.call_id ?? ''),
+                  name: String(item.name ?? ''),
+                  input,
+                });
               }
             }
+            const billed = asRecord(response.usage);
             usage = {
-              input: r.usage?.input_tokens ?? 0,
-              output: r.usage?.output_tokens ?? 0,
+              input: asNumber(billed?.input_tokens) ?? 0,
+              output: asNumber(billed?.output_tokens) ?? 0,
             };
-            stopReason = toolCalls.length ? 'tool_use' : (r.status ?? 'completed');
+            stopReason = toolCalls.length ? 'tool_use' : (asString(response.status) ?? 'completed');
             break;
           }
         }

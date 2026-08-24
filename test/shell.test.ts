@@ -99,5 +99,34 @@ check(
   JSON.stringify(bogus),
 );
 
+// A persistent shell is a live child process holding the event loop open. If
+// resetShells() does not actually kill it, `spider -p` never exits after a
+// bash call — it prints its answer and then hangs forever.
+{
+  const { shellFor, resetShells } = await import('../src/tools/shell.ts');
+  const shell = shellFor(process.cwd());
+  await shell.run('echo alive', 5000);
+  const proc = (shell as unknown as { proc: { pid?: number; killed: boolean } | null }).proc;
+  check('the persistent shell really started', Boolean(proc?.pid), String(proc?.pid));
+
+  resetShells();
+  await new Promise((r) => setTimeout(r, 300));
+  check(
+    'resetShells kills the child so the process can exit',
+    proc === null || proc.killed || !isAlive(proc.pid),
+    'killed=' + proc?.killed + ' pid=' + proc?.pid,
+  );
+}
+
+function isAlive(pid: number | undefined): boolean {
+  if (!pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 console.log(failures.length ? '\n' + failures.length + ' FAILED' : '\nAll shell checks passed');
 process.exit(failures.length ? 1 : 0);

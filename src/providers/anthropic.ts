@@ -1,6 +1,7 @@
 import { postSSE } from './http.ts';
 import type { AssistantResult, Provider, StreamOpts, ToolCall, Turn } from './types.ts';
 import { SpiderAIError } from './types.ts';
+import { asNumber, asRecord, asString } from '../errors.ts';
 
 /**
  * Only Haiku 4.5 is entitled on a SpiderAI student key, and only under its full
@@ -87,53 +88,63 @@ export function createAnthropicProvider(baseUrl: string, apiKey: string): Provid
 
       for await (const { data } of stream) {
         switch (data?.type) {
-          case 'message_start':
+          case 'message_start': {
             // Cached input is billed differently but is still input the
             // request carried; counting only the uncached part would make
             // /context under-report and auto-compaction fire late.
+            const billed = asRecord(asRecord(data.message)?.usage);
             usage.input =
-              (data.message?.usage?.input_tokens ?? 0) +
-              (data.message?.usage?.cache_read_input_tokens ?? 0) +
-              (data.message?.usage?.cache_creation_input_tokens ?? 0);
+              (asNumber(billed?.input_tokens) ?? 0) +
+              (asNumber(billed?.cache_read_input_tokens) ?? 0) +
+              (asNumber(billed?.cache_creation_input_tokens) ?? 0);
             break;
-          case 'content_block_start':
-            if (data.content_block?.type === 'tool_use') {
-              partial.set(data.index, {
-                id: data.content_block.id,
-                name: data.content_block.name,
+          }
+          case 'content_block_start': {
+            const block = asRecord(data.content_block);
+            const index = asNumber(data.index);
+            if (block?.type === 'tool_use' && index !== undefined) {
+              partial.set(index, {
+                id: String(block.id ?? ''),
+                name: String(block.name ?? ''),
                 json: '',
               });
             }
             break;
-          case 'content_block_delta':
-            if (data.delta?.type === 'text_delta') {
-              text += data.delta.text;
-              opts.onDelta(data.delta.text);
-            } else if (data.delta?.type === 'input_json_delta') {
-              const p = partial.get(data.index);
-              if (p) p.json += data.delta.partial_json ?? '';
+          }
+          case 'content_block_delta': {
+            const delta = asRecord(data.delta);
+            const index = asNumber(data.index);
+            if (delta?.type === 'text_delta') {
+              const chunk = asString(delta.text) ?? '';
+              text += chunk;
+              opts.onDelta(chunk);
+            } else if (delta?.type === 'input_json_delta' && index !== undefined) {
+              const pending = partial.get(index);
+              if (pending) pending.json += asString(delta.partial_json) ?? '';
             }
             break;
+          }
           case 'content_block_stop': {
-            const p = partial.get(data.index);
-            if (p) {
+            const index = asNumber(data.index);
+            const pending = index === undefined ? undefined : partial.get(index);
+            if (pending && index !== undefined) {
               let input: Record<string, unknown> = {};
               try {
-                input = p.json ? JSON.parse(p.json) : {};
+                input = pending.json ? JSON.parse(pending.json) : {};
               } catch {
                 /* malformed arguments surface as an empty input */
               }
-              toolCalls.push({ id: p.id, name: p.name, input });
-              partial.delete(data.index);
+              toolCalls.push({ id: pending.id, name: pending.name, input });
+              partial.delete(index);
             }
             break;
           }
           case 'message_delta':
-            usage.output = data.usage?.output_tokens ?? usage.output;
-            stopReason = data.delta?.stop_reason ?? stopReason;
+            usage.output = asNumber(asRecord(data.usage)?.output_tokens) ?? usage.output;
+            stopReason = asString(asRecord(data.delta)?.stop_reason) ?? stopReason;
             break;
           case 'error':
-            throw new SpiderAIError(data.error?.message ?? 'Stream error');
+            throw new SpiderAIError(asString(asRecord(data.error)?.message) ?? 'Stream error');
         }
       }
 

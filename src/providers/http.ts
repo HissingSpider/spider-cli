@@ -84,7 +84,13 @@ export async function postJSON(
   throw lastErr;
 }
 
-export type SSEEvent = { event: string; data: any };
+/**
+ * A decoded SSE frame. The payload differs per provider and per event type, so
+ * the fields are unknown and each adapter narrows what it reads.
+ */
+export type SSEData = { type?: string; [key: string]: unknown };
+
+export type SSEEvent = { event: string; data: SSEData };
 
 /**
  * POST expecting SSE back. If the gateway rejects the request it answers with a

@@ -186,11 +186,40 @@ function envFor(extra?: Record<string, string>): Record<string, string> {
  * themselves; binary content is described rather than dumped, and a resource
  * link keeps its URI so the model can ask to read it.
  */
-export function textOf(result: any): string {
-  const content = result?.content;
+/**
+ * Sampling content is either one block or an array of them, and only text
+ * blocks carry `text`. Narrowing beats asserting: an image block used to
+ * stringify to "undefined".
+ */
+function textOfBlock(content: unknown): string {
+  if (Array.isArray(content)) return content.map(textOfBlock).join('\n');
+  if (typeof content === 'object' && content !== null && 'type' in content) {
+    const block = content as { type?: unknown; text?: unknown };
+    if (block.type === 'text' && typeof block.text === 'string') return block.text;
+    return '[' + String(block.type ?? 'unknown') + ' content]';
+  }
+  return '[non-text content]';
+}
+
+export function textOf(result: unknown): string {
+  const content =
+    typeof result === 'object' && result !== null
+      ? (result as { content?: unknown }).content
+      : undefined;
   if (!Array.isArray(content)) return JSON.stringify(result ?? {});
   const parts: string[] = [];
-  for (const block of content) {
+  for (const rawBlock of content) {
+    // Every field the switch below reads, across the block kinds MCP defines.
+    const block = rawBlock as {
+      type?: string;
+      text?: unknown;
+      name?: unknown;
+      description?: unknown;
+      data?: unknown;
+      mimeType?: unknown;
+      uri?: unknown;
+      resource?: { text?: unknown; uri?: unknown; mimeType?: unknown };
+    };
     switch (block?.type) {
       case 'text':
         parts.push(String(block.text));
@@ -306,9 +335,9 @@ class ServerConnection {
 
     if (this.hooks.onSampling) {
       client.setRequestHandler(CreateMessageRequestSchema, async (req) => {
-        const messages = (req.params.messages ?? []).map((m: any) => ({
+        const messages = (req.params.messages ?? []).map((m) => ({
           role: String(m.role),
-          text: m.content?.type === 'text' ? String(m.content.text) : '[non-text content]',
+          text: textOfBlock(m.content),
         }));
         this.notice('MCP: "' + this.name + '" requested an inference.');
         const text = await this.hooks.onSampling!({
@@ -451,7 +480,7 @@ class ServerConnection {
       // A server that marks a tool read-only lets the permission engine treat
       // it like `grep` rather than like `rm`: usable during plan mode, and free
       // of an approval prompt. Absent the hint we assume the tool acts.
-      if ((t as any)?.annotations?.readOnlyHint === true) readOnly.push(full);
+      if (t.annotations?.readOnlyHint === true) readOnly.push(full);
 
       this.tools[full] = {
         spec: {
@@ -469,7 +498,7 @@ class ServerConnection {
           }
           try {
             const res = await live.callTool({ name: t.name, arguments: input });
-            return { output: textOf(res), isError: Boolean((res as any)?.isError) };
+            return { output: textOf(res), isError: Boolean(res.isError) };
           } catch (err) {
             return { output: 'MCP call failed: ' + errorMessage(err), isError: true };
           }
@@ -488,7 +517,7 @@ class ServerConnection {
     if (!client) return;
     try {
       const listed = await client.listResources();
-      const refs = (listed.resources ?? []).map((r: any) => ({
+      const refs = (listed.resources ?? []).map((r) => ({
         server: this.name,
         uri: String(r.uri),
         name: String(r.name ?? r.uri),
@@ -508,11 +537,11 @@ class ServerConnection {
     if (!client) return;
     try {
       const listed = await client.listPrompts();
-      const refs = (listed.prompts ?? []).map((p: any) => ({
+      const refs = (listed.prompts ?? []).map((p) => ({
         server: this.name,
         name: String(p.name),
         description: p.description,
-        arguments: (p.arguments ?? []).map((a: any) => ({
+        arguments: (p.arguments ?? []).map((a) => ({
           name: String(a.name),
           description: a.description,
           required: Boolean(a.required),
@@ -581,7 +610,7 @@ class ServerConnection {
       void this.scheduleReconnect();
     };
     // The SDK exposes onclose on both the client and its transport.
-    (client as any).onclose = onClose;
+    client.onclose = onClose;
   }
 
   private async scheduleReconnect(): Promise<void> {
@@ -611,7 +640,7 @@ class ServerConnection {
     const client = this.client;
     this.client = null;
     if (client) {
-      (client as any).onclose = undefined;
+      client.onclose = undefined;
       try {
         await client.close();
       } catch {
@@ -659,7 +688,7 @@ export async function connectServers(
     async getPrompt(server, name, args) {
       const res = await find(server).getPrompt({ name, arguments: args ?? {} });
       return (res.messages ?? [])
-        .map((m: any) =>
+        .map((m) =>
           m.content?.type === 'text' ? String(m.content.text) : '[non-text prompt content]',
         )
         .join('\n\n');
@@ -671,7 +700,7 @@ export async function connectServers(
           ref: { type: 'ref/prompt', name: promptName },
           argument: { name: argName, value },
         });
-        return (res as any)?.completion?.values ?? [];
+        return res.completion?.values ?? [];
       } catch {
         // Completion is optional and a server that lacks it must not turn
         // typing an argument into an error.
@@ -682,8 +711,8 @@ export async function connectServers(
     async readResource(server, uri) {
       const res = await find(server).readResource({ uri });
       return (res.contents ?? [])
-        .map((c: any) =>
-          c.text !== undefined
+        .map((c) =>
+          'text' in c
             ? String(c.text)
             : '[binary resource ' + (c.mimeType ?? '') + ' at ' + c.uri + ']',
         )
