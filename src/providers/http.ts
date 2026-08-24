@@ -109,6 +109,7 @@ export async function* postSSE(
     }
 
     let idx: number;
+    // biome-ignore lint/suspicious/noAssignInExpressions: the standard frame-scanning idiom; splitting it needs a duplicated call
     while ((idx = buf.indexOf('\n\n')) !== -1) {
       const raw = buf.slice(0, idx);
       buf = buf.slice(idx + 2);

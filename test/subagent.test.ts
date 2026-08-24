@@ -43,7 +43,7 @@ check('frontmatter description is read',
 check('the tool list is parsed',
   JSON.stringify(reviewer?.tools) === '["read_file","grep","glob"]', JSON.stringify(reviewer?.tools));
 check('the body becomes the prompt',
-  reviewer?.prompt.includes('You do not change it'), reviewer?.prompt);
+  Boolean(reviewer?.prompt.includes('You do not change it')), reviewer?.prompt);
 
 console.log('\ndepth');
 const root = new Agent(dir, settings, null, 'https://example.invalid/v1', 'unused');

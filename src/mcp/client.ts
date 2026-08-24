@@ -405,7 +405,7 @@ class ServerConnection {
   private shouldExpose(toolName: string): boolean {
     const { tools: only, excludeTools: except } = this.cfg;
     if (only && !only.includes(toolName)) return false;
-    if (except && except.includes(toolName)) return false;
+    if (except?.includes(toolName)) return false;
     return true;
   }
 

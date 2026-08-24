@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Box, Text } from 'ink';
 import { theme } from './theme.ts';
 
@@ -87,6 +87,7 @@ export function inline(text: string, keyPrefix = ''): React.ReactNode[] {
   let m: RegExpExecArray | null;
   let n = 0;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: the standard exec-loop idiom for a global regex
   while ((m = pattern.exec(text)) !== null) {
     if (m.index > last) out.push(<Text key={keyPrefix + 't' + n++}>{text.slice(last, m.index)}</Text>);
     const tok = m[0];

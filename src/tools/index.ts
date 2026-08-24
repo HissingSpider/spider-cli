@@ -8,7 +8,7 @@ import { todoTool } from './todo.ts';
 import { killJob, listJobs, readJob, shellFor, startBackground } from './shell.ts';
 
 const MAX_OUTPUT = 30_000;
-const BASH_TIMEOUT_MS = 120_000;
+const _BASH_TIMEOUT_MS = 120_000;
 // Directories never worth walking. The macOS entries matter because running
 // from $HOME otherwise drags ~/Library and app bundles into every search.
 const SKIP_DIRS = new Set([
@@ -99,6 +99,7 @@ function globToRegExp(pattern: string): RegExp {
       }
     } else if (c === '?') {
       src += '[^/]';
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: a set of regex metacharacters, not a template placeholder
     } else if ('.+^${}()|[]\\/'.includes(c)) {
       src += '\\' + c;
     } else {

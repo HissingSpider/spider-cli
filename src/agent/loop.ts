@@ -3,7 +3,14 @@ import type { PermissionMode, Settings } from '../config.ts';
 import { persistAllowRule, providerFor } from '../config.ts';
 import { createAnthropicProvider } from '../providers/anthropic.ts';
 import { createOpenAIProvider } from '../providers/openai.ts';
-import type { ImageAttachment, Provider, ToolCall, ToolSpec, Turn } from '../providers/types.ts';
+import type {
+  AssistantResult,
+  ImageAttachment,
+  Provider,
+  ToolCall,
+  ToolSpec,
+  Turn,
+} from '../providers/types.ts';
 import { TOOLS, type ToolImpl } from '../tools/index.ts';
 import { createSearchTool } from '../tools/search.ts';
 import { CostTracker } from '../cost.ts';
@@ -295,7 +302,7 @@ export class Agent {
         await this.compact(events);
       }
 
-      let result;
+      let result: AssistantResult;
       try {
         result = await this.provider().send({
           model: this.model,

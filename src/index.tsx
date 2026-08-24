@@ -1,11 +1,11 @@
 import path from 'node:path';
-import React from 'react';
 import { render } from 'ink';
 import { Agent } from './agent/loop.ts';
 import { describe } from './agent/loop.ts';
 import {
   addMcpServer,
   allModels,
+  type Credentials,
   loadCredentials,
   loadProjectInstructions,
   loadSettings,
@@ -305,7 +305,7 @@ async function main() {
   }
 
   const cwd = process.cwd();
-  let creds;
+  let creds: Credentials;
   try {
     creds = loadCredentials(cwd);
   } catch (err: any) {

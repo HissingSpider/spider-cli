@@ -1,5 +1,4 @@
-/** Renders the real App against a stub Agent — verifies the TUI mounts, slash
- *  commands dispatch, and the approval prompt paints, without needing a pty. */
+
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { App } from '../src/ui/App.tsx';
@@ -29,10 +28,10 @@ const stub: any = {
     estimateUSD: () => 0,
   },
   contextTokens: () => 0,
-  setModel(m: string) {
+  setModel(this: any, m: string) {
     this.model = m;
   },
-  async run(_text: string, events: any, signal?: AbortSignal) {
+  async run(this: any, _text: string, events: any, signal?: AbortSignal) {
     if (signal) this.lastSignal = signal;
     // Drive one permission round-trip through the UI.
     const answer = await events.requestPermission(
@@ -59,7 +58,7 @@ async function type(stdin: { write: (s: string) => void }, text: string) {
 }
 
 const UP = ESC + '[A';
-const DOWN = ESC + '[B';
+const _DOWN = ESC + '[B';
 const SHIFT_TAB = ESC + '[Z';
 
 const failures: string[] = [];

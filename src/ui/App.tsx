@@ -466,7 +466,7 @@ export function App({
     );
     return () => setElicitHandler(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pendingNotices, push]);
 
   useEffect(() => {
     if (initialTurns > 0) {
@@ -1123,7 +1123,7 @@ export function App({
       for (const note of resolved.notes) push({ kind: 'notice', text: note });
       void runAgent(resolved.text, resolved.images);
     },
-    [agent, busy, commands, cwd, exit, flush, history, mcp, mcpStatus, pending, pendingElicit, pendingPlan, push, runAgent],
+    [agent, busy, commands, cwd, exit, flush, history, mcp, mcpStatus, pending, pendingElicit, pendingPlan, push, runAgent, themeName, sessionId],
   );
 
   return (

@@ -21,6 +21,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spider-preview-'));
 const base: Settings = {
   model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
   autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  hooks: {},
 };
 
 console.log('\nunifiedDiff');

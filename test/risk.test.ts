@@ -21,6 +21,7 @@ const CWD = '/Users/me/project';
 const base: Settings = {
   model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
   autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  hooks: {},
 };
 const bash = (c: string): ToolCall => ({ id: 'c', name: 'bash', input: { command: c } });
 const eq = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);

@@ -84,6 +84,7 @@ server.close();
 const settings: Settings = {
   model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
   autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  hooks: {},
 };
 const call: ToolCall = { id: 'c', name: 'web_fetch', input: { url: 'https://deerdawn.com/a/b.md' } };
 

@@ -25,6 +25,7 @@ const base: Settings = {
   autoCompactAt: 100000,
   keepRecentTurns: 6,
   mcpServers: {},
+  hooks: {},
 };
 
 const read = (p: string): ToolCall => ({ id: 'c', name: 'read_file', input: { path: p } });

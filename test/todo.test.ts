@@ -19,6 +19,7 @@ function check(name: string, cond: boolean, detail?: string) {
 const base: Settings = {
   model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
   autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  hooks: {},
 };
 const call = (todos: unknown): ToolCall => ({ id: 't', name: 'todo_write', input: { todos } });
 

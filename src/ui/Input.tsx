@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import type React from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { theme } from './theme.ts';
 

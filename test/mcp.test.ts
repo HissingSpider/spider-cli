@@ -20,6 +20,7 @@ const rich = { command: process.execPath, args: [path.join(here, 'mcp-rich-fixtu
 const base: Settings = {
   model: 'gpt-5', permissionMode: 'default', allow: [], deny: [], maxTokens: 8192,
   autoCompactAt: 100000, keepRecentTurns: 6, mcpServers: {},
+  hooks: {},
 };
 
 clearReadOnlyTools();
@@ -64,7 +65,7 @@ check('an un-hinted tool is refused while planning',
   decide(mutate, base, 'plan', process.cwd()).kind === 'deny');
 
 console.log('\nnon-text content is described, not dumped');
-const noisy = await mcp.tools['mcp__rich__noisy'].run({}, process.cwd());
+const noisy = await mcp.tools.mcp__rich__noisy.run({}, process.cwd());
 check('text survives', noisy.output.includes('here is a picture'));
 check('an image is summarized', /\[image, image\/png, \d+ KB\]/.test(noisy.output), noisy.output);
 check('a resource link keeps its uri', noisy.output.includes('mem://doc/1'), noisy.output);
@@ -77,7 +78,7 @@ check('getPrompt fills arguments',
 
 console.log('\ntools/list_changed is acted on');
 const before = Object.keys(mcp.tools).filter((k) => k.startsWith('mcp__rich__')).length;
-await mcp.tools['mcp__rich__grow'].run({}, process.cwd());
+await mcp.tools.mcp__rich__grow.run({}, process.cwd());
 await new Promise((r) => setTimeout(r, 500));
 const after = Object.keys(mcp.tools).filter((k) => k.startsWith('mcp__rich__')).length;
 check('a tool added mid-session appears', after === before + 1, before + ' -> ' + after);
