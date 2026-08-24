@@ -457,7 +457,19 @@ renders the real TUI against a stub agent for 41 checks.
 ## Development
 
 ```bash
-npm run check   # typecheck + tests
-npm test        # all suites
-npm run build   # bundle to dist/
+npm run check      # typecheck + lint + format check + all suites (what CI runs)
+npm test           # all 19 suites; hermetic, no network or API key
+npm test -- oauth  # one suite by name
+npm run lint       # Biome lint
+npm run lint:fix   # apply safe lint fixes
+npm run format     # reformat in place
+npm run build      # bundle to dist/
 ```
+
+Linting and formatting are both Biome. typescript-eslint has no release
+compatible with TypeScript 7 (its peer range stops at `<6.1.0`), and
+downgrading the compiler to suit a linter was the wrong trade.
+
+`noExplicitAny` and `noArrayIndexKey` are warnings rather than errors — they
+are real debt, tracked but not blocking. Everything else is an error and CI
+fails on it.
