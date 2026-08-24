@@ -22,6 +22,7 @@ import { createTaskTool } from './subagent.ts';
 import { createExitPlanModeTool, type PlanAnswer } from './plan.ts';
 import { runHooks, toolPayload } from './hooks.ts';
 import { classifyCommand } from './risk.ts';
+import { isAbortError } from '../errors.ts';
 
 const DEFAULT_MAX_ITERATIONS = 25;
 /** How deep the task tree may go. Two levels is enough to fan out and report. */
@@ -316,8 +317,8 @@ export class Agent {
           onDelta: events.onDelta,
           onReasoning: events.onReasoning,
         });
-      } catch (err: any) {
-        if (signal?.aborted || err?.name === 'AbortError') {
+      } catch (err) {
+        if (signal?.aborted || isAbortError(err)) {
           this.settleInterruptedCalls();
           throw new InterruptedError();
         }

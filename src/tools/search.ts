@@ -1,4 +1,5 @@
 import type { ToolImpl } from './index.ts';
+import { errorMessage } from '../errors.ts';
 
 /**
  * Web search.
@@ -140,12 +141,12 @@ export function createSearchTool(cfg: SearchConfig | undefined): ToolImpl {
             .join('\n\n'),
           isError: false,
         };
-      } catch (err: any) {
+      } catch (err) {
         const aborted = controller.signal.aborted;
         return {
           output: aborted
             ? 'Search timed out after ' + TIMEOUT_MS + 'ms.'
-            : 'Search failed: ' + (err?.message ?? String(err)),
+            : 'Search failed: ' + errorMessage(err),
           isError: true,
         };
       } finally {

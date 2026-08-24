@@ -16,6 +16,7 @@ import {
 import type { ToolImpl } from '../tools/index.ts';
 import { FileOAuthProvider, hasStoredTokens } from './oauth.ts';
 import { registerReadOnlyTools } from '../agent/permissions.ts';
+import { errorMessage } from '../errors.ts';
 
 /** A local server spawned over stdio. */
 export type McpStdioConfig = {
@@ -469,8 +470,8 @@ class ServerConnection {
           try {
             const res = await live.callTool({ name: t.name, arguments: input });
             return { output: textOf(res), isError: Boolean((res as any)?.isError) };
-          } catch (err: any) {
-            return { output: 'MCP call failed: ' + (err?.message ?? String(err)), isError: true };
+          } catch (err) {
+            return { output: 'MCP call failed: ' + errorMessage(err), isError: true };
           }
         },
       };
@@ -548,11 +549,11 @@ class ServerConnection {
         error: undefined,
       });
       this.watchForClose(client);
-    } catch (err: any) {
+    } catch (err) {
       this.client = null;
       const needsAuth =
         err instanceof UnauthorizedError ||
-        /unauthoriz|401|invalid credentials/i.test(String(err?.message));
+        /unauthoriz|401|invalid credentials/i.test(errorMessage(err));
       const tail = this.status.stderr.slice(-2).join(' | ');
       Object.assign(this.status, {
         ok: false,
@@ -560,7 +561,7 @@ class ServerConnection {
         latencyMs: Date.now() - started,
         error: needsAuth
           ? 'needs authorization — run: spider mcp login ' + this.name
-          : (err?.message ?? String(err)) + (tail ? ' — stderr: ' + tail : ''),
+          : errorMessage(err) + (tail ? ' — stderr: ' + tail : ''),
       });
       try {
         await client.close();

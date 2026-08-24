@@ -1,5 +1,6 @@
 import type { ToolImpl } from './index.ts';
 import type { McpConnection } from '../mcp/client.ts';
+import { errorMessage } from '../errors.ts';
 
 /**
  * Resource access as two tools rather than one per resource.
@@ -72,9 +73,9 @@ export function createResourceTools(mcp: McpConnection): Record<string, ToolImpl
         try {
           const text = await mcp.readResource(String(input.server), String(input.uri));
           return { output: text || '(empty resource)', isError: false };
-        } catch (err: any) {
+        } catch (err) {
           return {
-            output: 'Could not read resource: ' + (err?.message ?? String(err)),
+            output: 'Could not read resource: ' + errorMessage(err),
             isError: true,
           };
         }

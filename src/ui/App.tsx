@@ -25,6 +25,7 @@ import { setElicitHandler, type ElicitAnswer, type ElicitRequest } from './elici
 import { detectTheme, setTheme, theme, width } from './theme.ts';
 import { bell, setTitle } from './terminal.ts';
 import { Input } from './Input.tsx';
+import { errorMessage, isAbortError } from '../errors.ts';
 
 // Split so `push` can take an item without an id: Omit<> over a bare union
 // collapses to the keys they share, which erases `label` and `output`.
@@ -444,8 +445,8 @@ export function App({
       // Ink owns the terminal; the editor needs it back for the duration.
       spawnSync(editor, [file], { stdio: 'inherit' });
       setInput(readFileSync(file, 'utf8').replace(/\n$/, ''));
-    } catch (e: any) {
-      push({ kind: 'error', text: 'Editor failed: ' + (e?.message ?? String(e)) });
+    } catch (e) {
+      push({ kind: 'error', text: 'Editor failed: ' + errorMessage(e) });
     } finally {
       try {
         unlinkSync(file);
@@ -664,16 +665,12 @@ export function App({
           controller.signal,
           images,
         );
-      } catch (err: any) {
-        if (
-          err instanceof InterruptedError ||
-          err?.name === 'AbortError' ||
-          controller.signal.aborted
-        ) {
+      } catch (err) {
+        if (err instanceof InterruptedError || isAbortError(err) || controller.signal.aborted) {
           if (buffer.trim()) push({ kind: 'assistant', text: buffer.trim() });
           push({ kind: 'notice', text: 'Interrupted.' });
         } else {
-          push({ kind: 'error', text: err?.message ?? String(err) });
+          push({ kind: 'error', text: errorMessage(err) });
         }
       } finally {
         abortRef.current = null;
@@ -752,7 +749,7 @@ export function App({
               text: '[ran directly] $ ' + command + '\n' + r.output,
             });
           })
-          .catch((e: any) => push({ kind: 'error', text: e?.message ?? String(e) }))
+          .catch((e: any) => push({ kind: 'error', text: errorMessage(e) }))
           .finally(() => setBusy(false));
         return;
       }
@@ -765,8 +762,8 @@ export function App({
         try {
           appendFileSync(cwd + '/SPIDER.md', '\n- ' + note + '\n');
           push({ kind: 'notice', text: 'Added to SPIDER.md: ' + note });
-        } catch (e: any) {
-          push({ kind: 'error', text: 'Could not write SPIDER.md: ' + e.message });
+        } catch (e) {
+          push({ kind: 'error', text: 'Could not write SPIDER.md: ' + errorMessage(e) });
         }
         return;
       }
@@ -899,7 +896,7 @@ export function App({
                 onNotice: (t) => push({ kind: 'notice', text: t }),
                 requestPermission: async () => 'deny',
               })
-              .catch((e: any) => push({ kind: 'error', text: e?.message ?? String(e) }))
+              .catch((e: any) => push({ kind: 'error', text: errorMessage(e) }))
               .finally(() => setBusy(false));
             return;
           case '/permissions':
@@ -926,8 +923,8 @@ export function App({
               agent.setModel(arg);
               setModel(arg);
               push({ kind: 'notice', text: 'Model set to ' + arg });
-            } catch (e: any) {
-              push({ kind: 'error', text: e.message });
+            } catch (e) {
+              push({ kind: 'error', text: errorMessage(e) });
             }
             return;
           case '/mode':
@@ -978,8 +975,8 @@ export function App({
                 }),
               );
               push({ kind: 'notice', text: 'Wrote the transcript to ' + target });
-            } catch (e: any) {
-              push({ kind: 'error', text: 'Could not write ' + target + ': ' + e.message });
+            } catch (e) {
+              push({ kind: 'error', text: 'Could not write ' + target + ': ' + errorMessage(e) });
             }
             return;
           }
@@ -1188,7 +1185,7 @@ export function App({
                     return runAgent(text);
                   })
                   .catch((e: any) =>
-                    push({ kind: 'error', text: 'Prompt failed: ' + (e?.message ?? String(e)) }),
+                    push({ kind: 'error', text: 'Prompt failed: ' + errorMessage(e) }),
                   )
                   .finally(() => setBusy(false));
                 return;

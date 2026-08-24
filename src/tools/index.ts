@@ -6,6 +6,7 @@ import { expandHome } from '../config.ts';
 import { webFetchTool } from './web.ts';
 import { todoTool } from './todo.ts';
 import { killJob, listJobs, readJob, shellFor, startBackground } from './shell.ts';
+import { errorMessage } from '../errors.ts';
 
 const MAX_OUTPUT = 30_000;
 const _BASH_TIMEOUT_MS = 120_000;
@@ -444,8 +445,8 @@ export const TOOLS: Record<string, ToolImpl> = {
       let re: RegExp;
       try {
         re = new RegExp(input.pattern);
-      } catch (e: any) {
-        return fail('Invalid regex: ' + e.message);
+      } catch (e) {
+        return fail('Invalid regex: ' + errorMessage(e));
       }
       const filter = input.glob ? globToRegExp(input.glob) : null;
       const hits: string[] = [];

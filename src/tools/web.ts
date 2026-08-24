@@ -1,4 +1,5 @@
 import type { ToolImpl } from './index.ts';
+import { errorMessage, isAbortError } from '../errors.ts';
 
 const MAX_BYTES = 2_000_000;
 const MAX_CHARS = 50_000;
@@ -215,11 +216,8 @@ export const webFetchTool: ToolImpl = {
         output: header + '\n' + text + '\n--- end fetched content ---',
         isError: false,
       };
-    } catch (err: any) {
-      const msg =
-        err?.name === 'AbortError'
-          ? 'Timed out after ' + TIMEOUT_MS + 'ms'
-          : (err?.message ?? String(err));
+    } catch (err) {
+      const msg = isAbortError(err) ? 'Timed out after ' + TIMEOUT_MS + 'ms' : errorMessage(err);
       return { output: 'Fetch failed: ' + msg, isError: true };
     } finally {
       clearTimeout(timer);

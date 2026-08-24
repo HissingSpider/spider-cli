@@ -7,6 +7,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { postJSON, postSSE } from '../src/providers/http.ts';
 import { SpiderAIError, throwIfErrorBody } from '../src/providers/types.ts';
+import { errorCode, errorMessage } from '../src/errors.ts';
 
 const failures: string[] = [];
 function check(name: string, cond: boolean, detail?: string) {
@@ -20,8 +21,8 @@ const threw = async (fn: () => Promise<unknown>): Promise<string | null> => {
   try {
     await fn();
     return null;
-  } catch (e: any) {
-    return e?.message ?? String(e);
+  } catch (e) {
+    return errorMessage(e);
   }
 };
 
@@ -40,8 +41,8 @@ check(
     (() => {
       try {
         throwIfErrorBody({ error: { code: 400, message: 'Sub-product x is not allowed' } });
-      } catch (e: any) {
-        return e.message;
+      } catch (e) {
+        return errorMessage(e);
       }
       return '';
     })(),
@@ -53,8 +54,8 @@ check(
   (() => {
     try {
       throwIfErrorBody({ error: { code: 429, message: 'slow down' } });
-    } catch (e: any) {
-      return e.code === 429;
+    } catch (e) {
+      return errorCode(e) === 429;
     }
     return false;
   })(),
@@ -65,8 +66,8 @@ check(
   (() => {
     try {
       throwIfErrorBody({ error: 'plain string failure' });
-    } catch (e: any) {
-      return /plain string failure/.test(e.message);
+    } catch (e) {
+      return /plain string failure/.test(errorMessage(e));
     }
     return false;
   })(),
@@ -77,8 +78,8 @@ check(
   (() => {
     try {
       throwIfErrorBody({ detail: 'Missing Authorization header' });
-    } catch (e: any) {
-      return /Missing Authorization/.test(e.message);
+    } catch (e) {
+      return /Missing Authorization/.test(errorMessage(e));
     }
     return false;
   })(),

@@ -2,6 +2,7 @@ import type { ToolImpl } from '../tools/index.ts';
 import type { Agent, AgentEvents } from './loop.ts';
 import { describe } from './loop.ts';
 import { loadAgents, type AgentDefinition } from '../agents.ts';
+import { errorMessage } from '../errors.ts';
 
 /**
  * The `task` tool. Delegates a self-contained piece of work to a child agent
@@ -99,8 +100,8 @@ export function createTaskTool(parent: Agent): ToolImpl {
           }
         }
         return { output: 'Subagent finished without producing a report.', isError: true };
-      } catch (err: any) {
-        return { output: 'Subagent failed: ' + (err?.message ?? String(err)), isError: true };
+      } catch (err) {
+        return { output: 'Subagent failed: ' + errorMessage(err), isError: true };
       }
     },
   };

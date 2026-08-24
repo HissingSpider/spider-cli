@@ -36,6 +36,7 @@ import { App } from './ui/App.tsx';
 import { notice } from './ui/notices.ts';
 import { runHooks } from './agent/hooks.ts';
 import { elicit } from './ui/elicit.ts';
+import { errorMessage } from './errors.ts';
 
 type Args = {
   prompt?: string;
@@ -322,8 +323,8 @@ async function main() {
   let creds: Credentials;
   try {
     creds = loadCredentials(cwd);
-  } catch (err: any) {
-    console.error(err.message);
+  } catch (err) {
+    console.error(errorMessage(err));
     process.exit(1);
   }
 
@@ -534,8 +535,8 @@ async function main() {
       // A refused approval means the task did not actually complete; a script
       // needs to be able to tell that from success.
       if (refusals > 0) process.exitCode = 2;
-    } catch (err: any) {
-      const message = err?.message ?? String(err);
+    } catch (err) {
+      const message = errorMessage(err);
       if (json || streamJson) emit({ type: 'error', error: message });
       else console.error('\nError: ' + message);
       await mcp.close();

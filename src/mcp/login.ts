@@ -5,6 +5,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 import type { McpHttpConfig } from './client.ts';
 import { FileOAuthProvider, openInBrowser, startCallbackListener } from './oauth.ts';
+import { errorMessage } from '../errors.ts';
 
 export type Transportish = StreamableHTTPClientTransport | SSEClientTransport;
 
@@ -83,8 +84,8 @@ export async function loginToServer(
     const tools = await client.listTools();
     await client.close();
     return { ok: true, toolCount: tools.tools?.length ?? 0 };
-  } catch (err: any) {
-    return { ok: false, toolCount: 0, error: err?.message ?? String(err) };
+  } catch (err) {
+    return { ok: false, toolCount: 0, error: errorMessage(err) };
   } finally {
     listener.close();
   }
